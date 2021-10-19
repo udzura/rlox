@@ -8,6 +8,8 @@ use std::io::Write;
 use std::path::Path;
 use std::process::exit;
 
+pub mod scanner;
+
 pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
     let mut f = File::open(path)?;
     let mut bytes: Vec<u8> = Vec::new();
@@ -45,10 +47,11 @@ pub fn run_prompt() -> Result<(), IoError> {
     Ok(())
 }
 
+use scanner::*;
 fn run(source: String) -> Result<(), Box<dyn Error>> {
-    // let scanner = Scanner::new(&source);
-    // let tokens: Vec<Token> = scanner.scan_tokens();
-    // for token: Token in tokens.iter() {
+    let scanner = Scanner::new(&source);
+    // scanner.scan_tokens();
+    // for token: Token in scanner.tokens.iter() {
     //     println!("{:?}", token);
     // }
 
