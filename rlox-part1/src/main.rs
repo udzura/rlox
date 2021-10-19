@@ -1,5 +1,10 @@
+use std::env::args;
 use std::error::Error;
-use std::{env::args, process::exit};
+use std::path::PathBuf;
+use std::process::exit;
+
+extern crate rlox_part1;
+use rlox_part1::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     match args().len() {
@@ -8,12 +13,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             exit(64);
         }
         2 => {
-            // run_file(args().nth(1));
-            unimplemented!("file");
+            let path = PathBuf::from(args().nth(1).unwrap());
+            run_file(&path)?;
         }
         _ => {
-            // run_prompt();
-            unimplemented!("prompt");
+            run_prompt()?;
         }
     }
+    Ok(())
 }
