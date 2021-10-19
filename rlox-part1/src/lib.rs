@@ -8,6 +8,7 @@ use std::io::Write;
 use std::path::Path;
 use std::process::exit;
 
+pub mod errors;
 pub mod scanner;
 
 pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
@@ -57,13 +58,4 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
 
     eprintln!("s: {}", source);
     Ok(())
-}
-
-// To be in scan error struct...
-fn error(line: i64, message: &str) {
-    report(line, "", message);
-}
-
-fn report(line: i64, occurred: &str, message: &str) {
-    println!("[line: {}] Error{}: {}", line, occurred, message);
 }
