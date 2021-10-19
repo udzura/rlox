@@ -98,9 +98,9 @@ impl<'source> Scanner<'source> {
     }
 
     pub fn scan_tokens(&mut self) -> usize {
-        while self.is_at_end() {
+        while !self.is_at_end() {
             self.start = self.current;
-            //self.scan_token();
+            self.scan_token();
         }
 
         self.tokens.push(Token::new(
@@ -110,6 +110,62 @@ impl<'source> Scanner<'source> {
             self.line,
         ));
         self.tokens.len()
+    }
+
+    fn scan_token(&mut self) {
+        use TokenType::*;
+        let c = self.advance();
+        match c {
+            '(' => {
+                self.add_token(LEFT_PAREN, None);
+            }
+            ')' => {
+                self.add_token(RIGHT_PAREN, None);
+            }
+            '{' => {
+                self.add_token(LEFT_BRACE, None);
+            }
+            '}' => {
+                self.add_token(RIGHT_BRACE, None);
+            }
+            ',' => {
+                self.add_token(COMMA, None);
+            }
+            '.' => {
+                self.add_token(DOT, None);
+            }
+            '-' => {
+                self.add_token(MINUS, None);
+            }
+            '+' => {
+                self.add_token(PLUS, None);
+            }
+            ';' => {
+                self.add_token(SEMICOLON, None);
+            }
+            '*' => {
+                self.add_token(STAR, None);
+            }
+            _ => {}
+        }
+    }
+
+    fn advance(&mut self) -> char {
+        let c = self.source.chars().nth(self.current as usize).unwrap();
+        self.current += 1;
+        c
+    }
+
+    fn add_token(&mut self, token_type: TokenType, literal: Option<String>) {
+        let start = self.start as usize;
+        let current = self.current as usize;
+        let text = &self.source[start..current];
+        self.tokens.push(Token::new(
+            token_type,
+            text.to_owned(),
+            "".to_string(),
+            self.line,
+        ))
     }
 
     fn is_at_end(&self) -> bool {

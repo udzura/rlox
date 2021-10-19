@@ -49,11 +49,11 @@ pub fn run_prompt() -> Result<(), IoError> {
 
 use scanner::*;
 fn run(source: String) -> Result<(), Box<dyn Error>> {
-    let scanner = Scanner::new(&source);
-    // scanner.scan_tokens();
-    // for token: Token in scanner.tokens.iter() {
-    //     println!("{:?}", token);
-    // }
+    let mut scanner = Scanner::new(&source);
+    scanner.scan_tokens();
+    for token in scanner.tokens.iter() {
+        println!("{}", token);
+    }
 
     eprintln!("s: {}", source);
     Ok(())
