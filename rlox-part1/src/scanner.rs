@@ -55,7 +55,7 @@ pub enum TokenType {
 
 #[derive(Debug, Clone)]
 pub enum Literal {
-    Int(i32),
+    Num(f64),
     Str(String),
     Nil,
 }
@@ -63,7 +63,7 @@ pub enum Literal {
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Literal::Int(i) => write!(f, "<Int {:?}>", i),
+            Literal::Num(n) => write!(f, "<Num {:?}>", n),
             Literal::Str(s) => write!(f, "<Str {:?}>", s),
             Literal::Nil => write!(f, "<None>"),
         }
@@ -203,8 +203,12 @@ impl<'source> Scanner<'source> {
                 self.string()?;
             }
 
-            _ => {
-                return Err(ParseError::raise(self.line, "Unexpected character."));
+            c => {
+                if Self::is_digit(c) {
+                    self.number()?;
+                } else {
+                    return Err(ParseError::raise(self.line, "Unexpected character."));
+                }
             }
         };
         Ok(())
@@ -237,6 +241,14 @@ impl<'source> Scanner<'source> {
         }
     }
 
+    fn peek_next(&mut self) -> char {
+        if self.current + 1 >= (self.source.len() as i64) {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current as usize + 1).unwrap()
+        }
+    }
+
     fn string(&mut self) -> Result<(), ParseError> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
@@ -257,6 +269,41 @@ impl<'source> Scanner<'source> {
         let value = &self.source[start..end];
         self.add_token(TokenType::STRING, Some(Literal::Str(value.to_owned())));
         Ok(())
+    }
+
+    fn number(&mut self) -> Result<(), ParseError> {
+        while Self::is_digit(self.peek()) {
+            self.advance();
+        }
+        if self.peek() == '.' && Self::is_digit(self.peek_next()) {
+            // Consume the "."
+            self.advance();
+
+            while Self::is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let start = self.start as usize;
+        let end = self.current as usize;
+        let literal: f64 = (&self.source[start..end])
+            .parse()
+            .map_err(|_| ParseError::raise(self.line, "[BUG] invalid numeric format"))?;
+
+        self.add_token(TokenType::NUMBER, Some(Literal::Num(literal)));
+        Ok(())
+    }
+
+    fn is_digit(c: char) -> bool {
+        c >= '0' && c <= '9'
+    }
+
+    fn is_alpha(c: char) -> bool {
+        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+    }
+
+    fn is_alphanumeric(c: char) -> bool {
+        Self::is_alpha(c) || Self::is_digit(c)
     }
 
     fn is_at_end(&self) -> bool {
