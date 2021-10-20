@@ -1,4 +1,5 @@
 use super::errors::ParseError;
+use std::fmt;
 
 #[allow(non_camel_case_types, dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,16 +54,32 @@ pub enum TokenType {
 }
 
 #[derive(Debug, Clone)]
+pub enum Literal {
+    Int(i32),
+    Str(String),
+    Nil,
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Literal::Int(i) => write!(f, "{}", i),
+            Literal::Str(s) => write!(f, "{}", s),
+            Literal::Nil => write!(f, "<None>"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    // This is "Object", so set dummy type and fix in the future
-    pub literal: String,
+    pub literal: Literal,
     pub line: i64,
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: String, line: i64) -> Self {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: i64) -> Self {
         Self {
             token_type,
             lexeme,
@@ -72,7 +89,6 @@ impl Token {
     }
 }
 
-use std::fmt;
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?} {} {}", self.token_type, self.lexeme, self.literal)
@@ -108,7 +124,7 @@ impl<'source> Scanner<'source> {
         self.tokens.push(Token::new(
             TokenType::EOF,
             "".to_string(),
-            "".to_string(),
+            Literal::Nil,
             self.line,
         ));
         Ok(self.tokens.len())
@@ -218,16 +234,16 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn add_token(&mut self, token_type: TokenType, literal: Option<String>) {
+    fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let start = self.start as usize;
         let current = self.current as usize;
         let text = &self.source[start..current];
-        self.tokens.push(Token::new(
-            token_type,
-            text.to_owned(),
-            "".to_string(),
-            self.line,
-        ))
+        let literal = match literal {
+            None => Literal::Nil,
+            Some(l) => l,
+        };
+        self.tokens
+            .push(Token::new(token_type, text.to_owned(), literal, self.line))
     }
 
     fn is_at_end(&self) -> bool {
