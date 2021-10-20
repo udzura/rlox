@@ -1,3 +1,5 @@
+use super::errors::ParseError;
+
 #[allow(non_camel_case_types, dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
@@ -97,10 +99,10 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> usize {
+    pub fn scan_tokens(&mut self) -> Result<usize, ParseError> {
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token();
+            self.scan_token()?;
         }
 
         self.tokens.push(Token::new(
@@ -109,10 +111,10 @@ impl<'source> Scanner<'source> {
             "".to_string(),
             self.line,
         ));
-        self.tokens.len()
+        Ok(self.tokens.len())
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<(), ParseError> {
         use TokenType::*;
         let c = self.advance();
         match c {
@@ -146,8 +148,11 @@ impl<'source> Scanner<'source> {
             '*' => {
                 self.add_token(STAR, None);
             }
-            _ => {}
-        }
+            _ => {
+                return Err(ParseError::raise(self.line, "Unexpected character."));
+            }
+        };
+        Ok(())
     }
 
     fn advance(&mut self) -> char {

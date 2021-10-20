@@ -39,7 +39,7 @@ pub fn run_prompt() -> Result<(), IoError> {
         match run(line) {
             Ok(_) => {}
             Err(e) => {
-                eprintln!("{:?}", e);
+                eprintln!("{}", e);
             }
         }
     }
@@ -51,7 +51,7 @@ pub fn run_prompt() -> Result<(), IoError> {
 use scanner::*;
 fn run(source: String) -> Result<(), Box<dyn Error>> {
     let mut scanner = Scanner::new(&source);
-    scanner.scan_tokens();
+    scanner.scan_tokens()?;
     for token in scanner.tokens.iter() {
         println!("{}", token);
     }
