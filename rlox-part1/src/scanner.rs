@@ -63,8 +63,8 @@ pub enum Literal {
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Literal::Int(i) => write!(f, "{}", i),
-            Literal::Str(s) => write!(f, "{}", s),
+            Literal::Int(i) => write!(f, "<Int {:?}>", i),
+            Literal::Str(s) => write!(f, "<Str {:?}>", s),
             Literal::Nil => write!(f, "<None>"),
         }
     }
@@ -199,6 +199,9 @@ impl<'source> Scanner<'source> {
             '\n' => {
                 self.line += 1;
             }
+            '"' => {
+                self.string()?;
+            }
 
             _ => {
                 return Err(ParseError::raise(self.line, "Unexpected character."));
@@ -234,6 +237,32 @@ impl<'source> Scanner<'source> {
         }
     }
 
+    fn string(&mut self) -> Result<(), ParseError> {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            return Err(ParseError::raise(self.line, "Unterminated string."));
+        }
+
+        // The closing ".
+        self.advance();
+
+        let start = self.start as usize + 1;
+        let end = self.current as usize - 1;
+        let value = &self.source[start..end];
+        self.add_token(TokenType::STRING, Some(Literal::Str(value.to_owned())));
+        Ok(())
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.current >= (self.source.len() as i64)
+    }
+
     fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let start = self.start as usize;
         let current = self.current as usize;
@@ -244,9 +273,5 @@ impl<'source> Scanner<'source> {
         };
         self.tokens
             .push(Token::new(token_type, text.to_owned(), literal, self.line))
-    }
-
-    fn is_at_end(&self) -> bool {
-        self.current >= (self.source.len() as i64)
     }
 }
