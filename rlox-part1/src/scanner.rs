@@ -148,6 +148,42 @@ impl<'source> Scanner<'source> {
             '*' => {
                 self.add_token(STAR, None);
             }
+            '!' => {
+                let tok = if self.test('=') { BANG_EQUAL } else { BANG };
+                self.add_token(tok, None);
+            }
+            '=' => {
+                let tok = if self.test('=') { EQUAL_EQUAL } else { EQUAL };
+                self.add_token(tok, None);
+            }
+            '<' => {
+                let tok = if self.test('=') { LESS_EQUAL } else { LESS };
+                self.add_token(tok, None);
+            }
+            '>' => {
+                let tok = if self.test('=') {
+                    GREATER_EQUAL
+                } else {
+                    GREATER
+                };
+                self.add_token(tok, None);
+            }
+            '/' => {
+                if self.test('/') {
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(SLASH, None);
+                }
+            }
+            ' ' | '\r' | '\t' => {
+                // Ignore whitespace.
+            }
+            '\n' => {
+                self.line += 1;
+            }
+
             _ => {
                 return Err(ParseError::raise(self.line, "Unexpected character."));
             }
@@ -159,6 +195,27 @@ impl<'source> Scanner<'source> {
         let c = self.source.chars().nth(self.current as usize).unwrap();
         self.current += 1;
         c
+    }
+
+    fn test(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        let c = self.source.chars().nth(self.current as usize).unwrap();
+        if c != expected {
+            return false;
+        }
+
+        self.current += 1;
+        true
+    }
+
+    fn peek(&mut self) -> char {
+        if self.is_at_end() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current as usize).unwrap()
+        }
     }
 
     fn add_token(&mut self, token_type: TokenType, literal: Option<String>) {

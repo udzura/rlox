@@ -56,6 +56,6 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
         println!("{}", token);
     }
 
-    eprintln!("s: {}", source);
+    eprintln!("parse op: {}", source);
     Ok(())
 }
