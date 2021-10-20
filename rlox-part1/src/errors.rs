@@ -1,3 +1,4 @@
+#[derive(Debug)]
 struct ParseError {
     line: i64,
     occurred: String,
@@ -16,4 +17,4 @@ impl fmt::Display for ParseError {
     }
 }
 
-impl error::Error for ParseError {}
+impl std::error::Error for ParseError {}
