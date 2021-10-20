@@ -53,6 +53,32 @@ pub enum TokenType {
     EOF,
 }
 
+impl TokenType {
+    pub fn reserved_or_ident(s: &str) -> TokenType {
+        use TokenType::*;
+        match s {
+            "and" => AND,
+            "class" => CLASS,
+            "else" => ELSE,
+            "false" => FALSE,
+            "for" => FOR,
+            "fun" => FUN,
+            "if" => IF,
+            "nil" => NIL,
+            "or" => OR,
+            "print" => PRINT,
+            "return" => RETURN,
+            "super" => SUPER,
+            "this" => THIS,
+            "true" => TRUE,
+            "var" => VAR,
+            "while" => WHILE,
+
+            _ => IDENTIFIER,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Literal {
     Num(f64),
@@ -206,6 +232,8 @@ impl<'source> Scanner<'source> {
             c => {
                 if Self::is_digit(c) {
                     self.number()?;
+                } else if Self::is_alpha(c) {
+                    self.identifier()?;
                 } else {
                     return Err(ParseError::raise(self.line, "Unexpected character."));
                 }
@@ -291,6 +319,20 @@ impl<'source> Scanner<'source> {
             .map_err(|_| ParseError::raise(self.line, "[BUG] invalid numeric format"))?;
 
         self.add_token(TokenType::NUMBER, Some(Literal::Num(literal)));
+        Ok(())
+    }
+
+    fn identifier(&mut self) -> Result<(), ParseError> {
+        while Self::is_alphanumeric(self.peek()) {
+            self.advance();
+        }
+
+        let start = self.start as usize;
+        let end = self.current as usize;
+        let text = &self.source[start..end];
+        let token_type = TokenType::reserved_or_ident(text);
+
+        self.add_token(token_type, None);
         Ok(())
     }
 
