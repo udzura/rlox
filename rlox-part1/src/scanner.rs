@@ -1,4 +1,4 @@
-use super::errors::ParseError;
+use super::errors::ScanError;
 use super::token::*;
 
 pub struct Scanner<'source> {
@@ -21,7 +21,7 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<usize, ParseError> {
+    pub fn scan_tokens(&mut self) -> Result<usize, ScanError> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token()?;
@@ -36,7 +36,7 @@ impl<'source> Scanner<'source> {
         Ok(self.tokens.len())
     }
 
-    fn scan_token(&mut self) -> Result<(), ParseError> {
+    fn scan_token(&mut self) -> Result<(), ScanError> {
         use TokenType::*;
         let c = self.advance();
         match c {
@@ -115,7 +115,7 @@ impl<'source> Scanner<'source> {
                 } else if Self::is_alpha(c) {
                     self.identifier()?;
                 } else {
-                    return Err(ParseError::raise(self.line, "Unexpected character."));
+                    return Err(ScanError::raise(self.line, "Unexpected character."));
                 }
             }
         };
@@ -157,7 +157,7 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn string(&mut self) -> Result<(), ParseError> {
+    fn string(&mut self) -> Result<(), ScanError> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -166,7 +166,7 @@ impl<'source> Scanner<'source> {
         }
 
         if self.is_at_end() {
-            return Err(ParseError::raise(self.line, "Unterminated string."));
+            return Err(ScanError::raise(self.line, "Unterminated string."));
         }
 
         // The closing ".
@@ -179,7 +179,7 @@ impl<'source> Scanner<'source> {
         Ok(())
     }
 
-    fn number(&mut self) -> Result<(), ParseError> {
+    fn number(&mut self) -> Result<(), ScanError> {
         while Self::is_digit(self.peek()) {
             self.advance();
         }
@@ -196,13 +196,13 @@ impl<'source> Scanner<'source> {
         let end = self.current as usize;
         let literal: f64 = (&self.source[start..end])
             .parse()
-            .map_err(|_| ParseError::raise(self.line, "[BUG] invalid numeric format"))?;
+            .map_err(|_| ScanError::raise(self.line, "[BUG] invalid numeric format"))?;
 
         self.add_token(TokenType::NUMBER, Some(Literal::Num(literal)));
         Ok(())
     }
 
-    fn identifier(&mut self) -> Result<(), ParseError> {
+    fn identifier(&mut self) -> Result<(), ScanError> {
         while Self::is_alphanumeric(self.peek()) {
             self.advance();
         }

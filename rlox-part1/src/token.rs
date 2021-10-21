@@ -82,6 +82,7 @@ impl TokenType {
 pub enum Literal {
     Num(f64),
     Str(String),
+    Bool(bool),
     Nil,
 }
 
@@ -90,6 +91,7 @@ impl fmt::Display for Literal {
         match self {
             Literal::Num(n) => write!(f, "<Num {:?}>", n),
             Literal::Str(s) => write!(f, "<Str {:?}>", s),
+            Literal::Bool(b) => write!(f, "<Bool {:?}>", b),
             Literal::Nil => write!(f, "<None>"),
         }
     }
@@ -100,6 +102,7 @@ impl Literal {
         match self {
             Literal::Num(n) => n.to_string(),
             Literal::Str(s) => s.to_string(),
+            Literal::Bool(b) => b.to_string(),
             Literal::Nil => "".to_string(),
         }
     }
