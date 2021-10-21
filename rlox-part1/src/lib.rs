@@ -9,7 +9,9 @@ use std::path::Path;
 use std::process::exit;
 
 pub mod errors;
+pub mod expr;
 pub mod scanner;
+pub mod token;
 
 pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
     let mut f = File::open(path)?;
