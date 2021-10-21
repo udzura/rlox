@@ -1,14 +1,14 @@
 use super::token::{Literal, Token};
 use super::visitor::Visitor;
 
-type ExprP = Box<Expr>;
-type TokenP = Box<Token>;
-type LteralP = Box<Literal>;
+pub type ExprP = Box<Expr>;
+pub type TokenP = Box<Token>;
+pub type LiteralP = Box<Literal>;
 
-pub struct Binary(ExprP, TokenP, ExprP);
-pub struct Grouping(ExprP);
-pub struct Lit(LteralP);
-pub struct Unary(TokenP, ExprP);
+pub struct Binary(pub ExprP, pub TokenP, pub ExprP);
+pub struct Grouping(pub ExprP);
+pub struct Lit(pub LiteralP);
+pub struct Unary(pub TokenP, pub ExprP);
 
 pub enum Expr {
     Binary_(Binary),
@@ -18,7 +18,25 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: T) -> <T as Visitor>::R
+    pub fn binary(left: Self, operator: Token, right: Self) -> Self {
+        Self::Binary_(Binary(Box::new(left), Box::new(operator), Box::new(right)))
+    }
+
+    pub fn grouping(expr: Self) -> Self {
+        Self::Grouping_(Grouping(Box::new(expr)))
+    }
+
+    pub fn literal(literal: Literal) -> Self {
+        Self::Literal_(Lit(Box::new(literal)))
+    }
+
+    pub fn unary(operator: Token, right: Self) -> Self {
+        Self::Unary_(Unary(Box::new(operator), Box::new(right)))
+    }
+}
+
+impl Expr {
+    pub fn accept<T>(&self, visitor: &T) -> <T as Visitor>::R
     where
         T: Visitor,
     {

@@ -95,6 +95,16 @@ impl fmt::Display for Literal {
     }
 }
 
+impl Literal {
+    pub fn value(&self) -> String {
+        match self {
+            Literal::Num(n) => n.to_string(),
+            Literal::Str(s) => s.to_string(),
+            Literal::Nil => "".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
@@ -104,7 +114,13 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: i64) -> Self {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: impl Into<String>,
+        literal: Literal,
+        line: i64,
+    ) -> Self {
+        let lexeme = lexeme.into();
         Self {
             token_type,
             lexeme,
