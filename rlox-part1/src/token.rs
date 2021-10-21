@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[allow(non_camel_case_types, dead_code)]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,
