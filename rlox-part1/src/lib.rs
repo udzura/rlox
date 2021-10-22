@@ -53,14 +53,18 @@ pub fn run_prompt() -> Result<(), IoError> {
     Ok(())
 }
 
+use ast_printer::AstPrinter;
+use parser::Parser;
 use scanner::*;
+
 fn run(source: String) -> Result<(), Box<dyn Error>> {
     let mut scanner = Scanner::new(&source);
     scanner.scan_tokens()?;
-    for token in scanner.tokens.iter() {
-        println!("{}", token);
+
+    let parser = Parser::new(scanner.tokens);
+    if let Some(expression) = parser.parse() {
+        println!("{}", AstPrinter {}.print(&expression));
     }
 
-    eprintln!("parse ok: {}", source);
     Ok(())
 }

@@ -20,6 +20,10 @@ impl Parser {
         Self { tokens, current }
     }
 
+    pub fn parse(&self) -> Option<Expr> {
+        self.expression().ok()
+    }
+
     fn expression(&self) -> ParseResult {
         self.equality()
     }
@@ -78,7 +82,7 @@ impl Parser {
     }
 
     fn unary(&self) -> ParseResult {
-        if self.matching(&[TokenType::BANG, TokenType::PLUS]) {
+        if self.matching(&[TokenType::BANG, TokenType::MINUS]) {
             let operator = self.previous();
             let right = self.unary()?;
             return Ok(Expr::unary(operator.clone(), right));
@@ -108,7 +112,7 @@ impl Parser {
             return Ok(Expr::grouping(expr));
         }
 
-        Err(ParseError::raise())
+        Err(self.report_error(self.peek(), "Expect expression."))
     }
 
     // fn a_parser(&self) -> ParseResult {
@@ -147,9 +151,33 @@ impl Parser {
             Ok(self.advance())
         } else {
             let token = self.peek();
-            ScanError::report(token, message);
-            Err(ParseError::raise())
+            Err(self.report_error(token, message))
         }
+    }
+
+    fn synchronize(&self) {
+        use TokenType::*;
+        self.advance();
+        while !self.is_at_end() {
+            if self.previous().token_type == SEMICOLON {
+                return;
+            }
+
+            match self.peek().token_type {
+                CLASS | FUN | VAR | FOR | IF | WHILE | PRINT | RETURN => {
+                    return;
+                }
+
+                _ => {}
+            }
+
+            self.advance();
+        }
+    }
+
+    fn report_error(&self, token: &Token, message: impl Into<String>) -> ParseError {
+        ScanError::report(token, message);
+        ParseError::raise()
     }
 
     fn is_at_end(&self) -> bool {
