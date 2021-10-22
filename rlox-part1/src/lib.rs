@@ -19,6 +19,8 @@ pub mod value;
 pub mod visitor;
 
 pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
+    use errors::*;
+
     let mut f = File::open(path)?;
     let mut bytes: Vec<u8> = Vec::new();
     f.read_to_end(&mut bytes)?;
@@ -26,8 +28,15 @@ pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
     match run(code) {
         Ok(_) => Ok(()),
         Err(e) => {
-            eprintln!("{:?}", e);
-            exit(65);
+            if let Some(e) = e.downcast_ref::<ParseError>() {
+                eprintln!("{:?}", e);
+                exit(65);
+            }
+            if let Some(e) = e.downcast_ref::<RuntimeError>() {
+                eprintln!("{:?}", e);
+                exit(70);
+            }
+            Ok(())
         }
     }
 }
@@ -55,7 +64,7 @@ pub fn run_prompt() -> Result<(), IoError> {
     Ok(())
 }
 
-use ast_printer::AstPrinter;
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::*;
 
@@ -65,7 +74,8 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
 
     let parser = Parser::new(scanner.tokens);
     if let Some(expression) = parser.parse() {
-        println!("{}", AstPrinter {}.print(&expression));
+        Interpreter {}.interpret(&expression)?;
+        // println!("{}", ast_printer::AstPrinter {}.print(&expression));
     }
 
     Ok(())

@@ -1,10 +1,9 @@
-use std::any::Any;
-
 use crate::token::Literal;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
+#[non_exhaustive]
 pub enum Value {
-    Object(Box<dyn Any>),
+    // Object(Box<dyn Any>),
     Nil,
     Boolean(bool),
     Number(f64),
