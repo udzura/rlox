@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::errors::ParseError;
+use super::errors::*;
 
 use super::expr::Expr;
 use super::token::*;
@@ -104,7 +104,7 @@ impl Parser {
 
         if self.matching(&[TokenType::LEFT_PAREN]) {
             let expr = self.expression()?;
-            //self.consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
+            self.consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.")?;
             return Ok(Expr::grouping(expr));
         }
 
@@ -140,6 +140,16 @@ impl Parser {
             *currp = curr + 1;
         }
         self.previous()
+    }
+
+    fn consume(&self, tt: TokenType, message: impl Into<String>) -> Result<&Token, ParseError> {
+        if self.check(tt) {
+            Ok(self.advance())
+        } else {
+            let token = self.peek();
+            ScanError::report(token, message);
+            Err(ParseError::raise())
+        }
     }
 
     fn is_at_end(&self) -> bool {
