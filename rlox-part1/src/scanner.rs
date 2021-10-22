@@ -115,7 +115,7 @@ impl<'source> Scanner<'source> {
                 } else if Self::is_alpha(c) {
                     self.identifier()?;
                 } else {
-                    return Err(ScanError::raise(self.line, "Unexpected character."));
+                    return Err(ScanError::raise(self.line, "", "Unexpected character."));
                 }
             }
         };
@@ -166,7 +166,7 @@ impl<'source> Scanner<'source> {
         }
 
         if self.is_at_end() {
-            return Err(ScanError::raise(self.line, "Unterminated string."));
+            return Err(ScanError::raise(self.line, "", "Unterminated string."));
         }
 
         // The closing ".
@@ -196,7 +196,7 @@ impl<'source> Scanner<'source> {
         let end = self.current as usize;
         let literal: f64 = (&self.source[start..end])
             .parse()
-            .map_err(|_| ScanError::raise(self.line, "[BUG] invalid numeric format"))?;
+            .map_err(|_| ScanError::raise(self.line, "", "[BUG] invalid numeric format"))?;
 
         self.add_token(TokenType::NUMBER, Some(Literal::Num(literal)));
         Ok(())

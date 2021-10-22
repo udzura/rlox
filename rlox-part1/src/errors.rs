@@ -1,3 +1,4 @@
+use super::token::{Token, TokenType};
 use std::error::Error;
 use std::fmt;
 
@@ -9,12 +10,21 @@ pub struct ScanError {
 }
 
 impl ScanError {
-    pub fn raise(line: i64, message: impl Into<String>) -> Self {
+    pub fn raise(line: i64, occurred: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             line,
+            occurred: occurred.into(),
             message: message.into(),
-            occurred: "".to_string(),
         }
+    }
+
+    pub fn report(token: &Token, message: impl Into<String>) {
+        let err = if token.token_type == TokenType::EOF {
+            Self::raise(token.line, " at end", message)
+        } else {
+            Self::raise(token.line, format!(" at '{}'", token.lexeme), message)
+        };
+        println!("{}", &err);
     }
 }
 
