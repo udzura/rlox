@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::value::Value;
+
 #[allow(non_camel_case_types, dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenType {
@@ -98,12 +100,12 @@ impl fmt::Display for Literal {
 }
 
 impl Literal {
-    pub fn value(&self) -> String {
+    pub fn value(&self) -> Value {
         match self {
-            Literal::Num(n) => n.to_string(),
-            Literal::Str(s) => s.to_string(),
-            Literal::Bool(b) => b.to_string(),
-            Literal::Nil => "".to_string(),
+            Literal::Num(n) => Value::Number(*n),
+            Literal::Str(s) => Value::LoxString(s.to_owned()),
+            Literal::Bool(b) => Value::Boolean(*b),
+            Literal::Nil => Value::Nil,
         }
     }
 }

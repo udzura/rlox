@@ -56,3 +56,24 @@ impl fmt::Display for ParseError {
 }
 
 impl Error for ParseError {}
+
+#[derive(Debug)]
+pub struct RuntimeError {
+    token: Token,
+    message: String,
+}
+
+impl RuntimeError {
+    pub fn raise(token: Token, message: impl Into<String>) -> Self {
+        let message = message.into();
+        Self { token, message }
+    }
+}
+
+impl fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl Error for RuntimeError {}

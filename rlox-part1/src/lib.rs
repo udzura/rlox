@@ -11,9 +11,11 @@ use std::process::exit;
 pub mod ast_printer;
 pub mod errors;
 pub mod expr;
+pub mod interpreter;
 pub mod parser;
 pub mod scanner;
 pub mod token;
+pub mod value;
 pub mod visitor;
 
 pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {

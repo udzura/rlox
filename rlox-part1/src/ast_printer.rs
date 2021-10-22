@@ -41,7 +41,7 @@ impl Visitor for AstPrinter {
         use super::token::Literal;
         match expr.0.as_ref() {
             Literal::Nil => "nil".to_string(),
-            lit => lit.value(),
+            lit => format!("{:?}", lit.value()),
         }
     }
 
