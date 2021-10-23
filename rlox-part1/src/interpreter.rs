@@ -1,14 +1,25 @@
-use super::value::Value;
-use super::visitor::*;
+use std::cell::RefCell;
+
+use crate::environment::Environment;
 use crate::errors::RuntimeError;
 use crate::expr::*;
 use crate::stmt::*;
 use crate::token::*;
+use crate::value::Value;
+use crate::visitor::*;
 
 #[derive(Debug)]
-pub struct Interpreter {}
+pub struct Interpreter {
+    environment: RefCell<Environment>,
+}
 
 impl Interpreter {
+    pub fn new() -> Self {
+        Self {
+            environment: RefCell::new(Environment::new()),
+        }
+    }
+
     pub fn interpret(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
         for statement in statements.iter() {
             self.execute(statement)?;
@@ -78,7 +89,12 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_var(&self, stmt: &Var) -> Self::R {
-        todo!()
+        let initializer = stmt.1.as_ref();
+        let value = self.evaluate(initializer)?;
+
+        let mut environment = self.environment.borrow_mut();
+        environment.define(&stmt.0.as_ref().lexeme, value);
+        Ok(())
     }
 }
 
@@ -175,5 +191,11 @@ impl ExprVisitor for Interpreter {
         // Should be unreachable...
         // Value::Nil
         unreachable!("[BUG] Maybe the parser has bug");
+    }
+
+    fn visit_variable(&self, expr: &Variable) -> Self::R {
+        let environment = self.environment.borrow();
+        let v = environment.get(expr.0.as_ref())?;
+        Ok(v.clone())
     }
 }

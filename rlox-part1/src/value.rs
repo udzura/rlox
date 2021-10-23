@@ -1,7 +1,7 @@
 use crate::token::Literal;
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub enum Value {
     // Object(Box<dyn Any>),

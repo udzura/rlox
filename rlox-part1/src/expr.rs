@@ -61,6 +61,7 @@ impl Expr {
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
             Unary_(expr) => visitor.visit_unary(expr),
+            Variable_(expr) => visitor.visit_variable(expr),
             _ => panic!("[BUG] invalid type of expr."),
         }
     }

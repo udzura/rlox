@@ -4,6 +4,7 @@ use crate::errors::RuntimeError;
 use crate::token::Token;
 use crate::value::Value;
 
+#[derive(Debug, Default)]
 pub struct Environment {
     values: HashMap<String, Value>,
 }

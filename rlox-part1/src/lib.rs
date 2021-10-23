@@ -83,7 +83,7 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
         //     );
         // }
 
-        Interpreter {}.interpret(&statements)?;
+        Interpreter::new().interpret(&statements)?;
     }
 
     Ok(())

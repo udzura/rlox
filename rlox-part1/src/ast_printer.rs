@@ -50,4 +50,8 @@ impl ExprVisitor for AstPrinter {
         let right = vec![expr.1.as_ref()];
         self.parenthesize(name, &right)
     }
+
+    fn visit_variable(&self, _expr: &Variable) -> Self::R {
+        todo!()
+    }
 }
