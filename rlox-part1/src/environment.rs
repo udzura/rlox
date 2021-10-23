@@ -20,6 +20,18 @@ impl Environment {
         self.values.insert(k.into(), v);
     }
 
+    pub fn assign(&mut self, name: &Token, v: Value) -> Result<(), RuntimeError> {
+        if self.values.contains_key(&name.lexeme) {
+            self.values.insert(name.lexeme.clone(), v);
+            return Ok(());
+        } else {
+            Err(RuntimeError::raise(
+                name.clone(),
+                format!("Undefined variable '{}'.", &name.lexeme),
+            ))
+        }
+    }
+
     pub fn get(&self, name: &Token) -> Result<&Value, RuntimeError> {
         let k = &name.lexeme;
         if self.values.contains_key(k) {

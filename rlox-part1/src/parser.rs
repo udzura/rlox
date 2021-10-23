@@ -83,7 +83,26 @@ impl Parser {
     }
 
     fn expression(&self) -> ParseResult {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&self) -> ParseResult {
+        let expr = self.equality()?;
+
+        if self.matching(&[TokenType::EQUAL]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+
+            if let Expr::Variable_(expr) = expr {
+                let name = expr.0.as_ref();
+                return Ok(Expr::assign(name.clone(), value));
+            }
+
+            ScanError::report(equals, "Invalid assignment target.");
+            return Err(ParseError::raise());
+        }
+
+        return Ok(expr);
     }
 
     fn equality(&self) -> ParseResult {

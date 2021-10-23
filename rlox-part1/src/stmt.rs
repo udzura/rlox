@@ -48,7 +48,8 @@ impl Stmt {
             Expression_(stmt) => visitor.visit_expression(stmt),
             Print_(stmt) => visitor.visit_print(stmt),
             Var_(stmt) => visitor.visit_var(stmt),
-            _ => panic!("[BUG] invalid type of expr."),
+            Null => visitor.visit_null(),
+            _ => panic!("[BUG] invalid type of expr {:?}.", self),
         }
     }
 }

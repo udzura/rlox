@@ -26,6 +26,10 @@ impl AstPrinter {
 impl ExprVisitor for AstPrinter {
     type R = String;
 
+    fn visit_assign(&self, _expr: &Assign) -> Self::R {
+        todo!()
+    }
+
     fn visit_binary(&self, expr: &Binary) -> Self::R {
         let name = &expr.1.lexeme;
         let exprs = vec![expr.0.as_ref(), expr.2.as_ref()];

@@ -96,10 +96,21 @@ impl StmtVisitor for Interpreter {
         environment.define(&stmt.0.as_ref().lexeme, value);
         Ok(())
     }
+
+    fn visit_null(&self) -> Self::R {
+        Ok(())
+    }
 }
 
 impl ExprVisitor for Interpreter {
     type R = Result<Value, RuntimeError>;
+
+    fn visit_assign(&self, expr: &Assign) -> Self::R {
+        let value = self.evaluate(expr.1.as_ref())?;
+        let mut envronmnt = self.environment.borrow_mut();
+        envronmnt.assign(expr.0.as_ref(), value.clone())?;
+        Ok(value)
+    }
 
     fn visit_binary(&self, expr: &Binary) -> Self::R {
         use TokenType::*;

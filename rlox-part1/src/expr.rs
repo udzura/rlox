@@ -6,6 +6,8 @@ pub type TokenP = Box<Token>;
 pub type LiteralP = Box<Literal>;
 
 #[derive(Debug, Clone)]
+pub struct Assign(pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
 pub struct Binary(pub ExprP, pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Grouping(pub ExprP);
@@ -19,6 +21,7 @@ pub struct Variable(pub TokenP);
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum Expr {
+    Assign_(Assign),
     Binary_(Binary),
     Grouping_(Grouping),
     Literal_(Lit),
@@ -29,6 +32,10 @@ pub enum Expr {
 }
 
 impl Expr {
+    pub fn assign(name: Token, value: Self) -> Self {
+        Self::Assign_(Assign(Box::new(name), Box::new(value)))
+    }
+
     pub fn binary(left: Self, operator: Token, right: Self) -> Self {
         Self::Binary_(Binary(Box::new(left), Box::new(operator), Box::new(right)))
     }
@@ -57,6 +64,7 @@ impl Expr {
     {
         use Expr::*;
         match self {
+            Assign_(expr) => visitor.visit_assign(expr),
             Binary_(expr) => visitor.visit_binary(expr),
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
