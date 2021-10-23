@@ -1,16 +1,22 @@
 use crate::expr::*;
+use crate::token::*;
 use crate::visitor::StmtVisitor;
 
 #[derive(Debug, Clone)]
 pub struct Expression(pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Print(pub ExprP);
+#[derive(Debug, Clone)]
+pub struct Var(pub TokenP, pub ExprP);
 
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Stmt {
     Expression_(Expression),
     Print_(Print),
+    Var_(Var),
 
+    Null,
     Dummy,
 }
 
@@ -21,6 +27,14 @@ impl Stmt {
 
     pub fn print(expr: Expr) -> Self {
         Self::Print_(Print(Box::new(expr)))
+    }
+
+    pub fn var(name: Token, initializer: Expr) -> Self {
+        Self::Var_(Var(Box::new(name), Box::new(initializer)))
+    }
+
+    pub fn null() -> Self {
+        Self::Null
     }
 }
 
@@ -33,6 +47,7 @@ impl Stmt {
         match self {
             Expression_(stmt) => visitor.visit_expression(stmt),
             Print_(stmt) => visitor.visit_print(stmt),
+            Var_(stmt) => visitor.visit_var(stmt),
             _ => panic!("[BUG] invalid type of expr."),
         }
     }

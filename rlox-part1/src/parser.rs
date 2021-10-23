@@ -25,10 +25,39 @@ impl Parser {
     pub fn parse(&self) -> Result<Vec<Stmt>, ParseError> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            statements.push(self.declaration()?);
         }
 
         Ok(statements)
+    }
+
+    fn declaration(&self) -> StmtResult {
+        match if self.matching(&[TokenType::VAR]) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        } {
+            Ok(s) => Ok(s),
+            Err(_) => {
+                self.synchronize();
+                Ok(Stmt::null())
+            }
+        }
+    }
+
+    fn var_declaration(&self) -> StmtResult {
+        let name = self.consume(TokenType::IDENTIFIER, "Expect variable name.")?;
+        let initializer = if self.matching(&[TokenType::EQUAL]) {
+            self.expression()?
+        } else {
+            Expr::literal(Literal::Nil)
+        };
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::var(name.clone(), initializer))
     }
 
     fn statement(&self) -> StmtResult {
@@ -139,6 +168,10 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.")?;
             return Ok(Expr::grouping(expr));
+        }
+
+        if self.matching(&[TokenType::IDENTIFIER]) {
+            return Ok(Expr::variable(self.previous().clone()));
         }
 
         Err(self.report_error(self.peek(), "Expect expression."))

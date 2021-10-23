@@ -15,4 +15,5 @@ pub trait StmtVisitor {
 
     fn visit_expression(&self, stmt: &Expression) -> Self::R;
     fn visit_print(&self, stmt: &Print) -> Self::R;
+    fn visit_var(&self, stmt: &Var) -> Self::R;
 }

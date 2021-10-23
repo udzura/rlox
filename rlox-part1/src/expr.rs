@@ -13,13 +13,17 @@ pub struct Grouping(pub ExprP);
 pub struct Lit(pub LiteralP);
 #[derive(Debug, Clone)]
 pub struct Unary(pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
+pub struct Variable(pub TokenP);
 
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Expr {
     Binary_(Binary),
     Grouping_(Grouping),
     Literal_(Lit),
     Unary_(Unary),
+    Variable_(Variable),
 
     Dummy,
 }
@@ -39,6 +43,10 @@ impl Expr {
 
     pub fn unary(operator: Token, right: Self) -> Self {
         Self::Unary_(Unary(Box::new(operator), Box::new(right)))
+    }
+
+    pub fn variable(name: Token) -> Self {
+        Self::Variable_(Variable(Box::new(name)))
     }
 }
 

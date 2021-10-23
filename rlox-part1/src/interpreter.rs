@@ -76,6 +76,10 @@ impl StmtVisitor for Interpreter {
         println!("{}", value);
         Ok(())
     }
+
+    fn visit_var(&self, stmt: &Var) -> Self::R {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {
