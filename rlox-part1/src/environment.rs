@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::errors::RuntimeError;
 use crate::token::Token;
@@ -6,12 +8,14 @@ use crate::value::Value;
 
 #[derive(Debug, Default)]
 pub struct Environment {
+    enclosing: Option<Rc<RefCell<Environment>>>,
     values: HashMap<String, Value>,
 }
 
 impl Environment {
-    pub fn new() -> Self {
+    pub fn new(enclosing: Option<Rc<RefCell<Environment>>>) -> Self {
         Self {
+            enclosing,
             values: HashMap::new(),
         }
     }
@@ -25,6 +29,10 @@ impl Environment {
             self.values.insert(name.lexeme.clone(), v);
             return Ok(());
         } else {
+            if let Some(enclosing) = &self.enclosing {
+                return enclosing.borrow_mut().assign(name, v);
+            }
+
             Err(RuntimeError::raise(
                 name.clone(),
                 format!("Undefined variable '{}'.", &name.lexeme),
@@ -32,11 +40,15 @@ impl Environment {
         }
     }
 
-    pub fn get(&self, name: &Token) -> Result<&Value, RuntimeError> {
+    pub fn get(&self, name: &Token) -> Result<Value, RuntimeError> {
         let k = &name.lexeme;
         if self.values.contains_key(k) {
-            return Ok(self.values.get(k).unwrap());
+            return Ok(self.values.get(k).unwrap().clone());
         } else {
+            if let Some(enclosing) = &self.enclosing {
+                return enclosing.borrow().get(name);
+            }
+
             Err(RuntimeError::raise(
                 name.clone(),
                 format!("Undefined variable '{}'.", k),

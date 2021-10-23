@@ -15,6 +15,7 @@ pub trait ExprVisitor {
 pub trait StmtVisitor {
     type R;
 
+    fn visit_block(&self, stmt: &Block) -> Self::R;
     fn visit_expression(&self, stmt: &Expression) -> Self::R;
     fn visit_print(&self, stmt: &Print) -> Self::R;
     fn visit_var(&self, stmt: &Var) -> Self::R;

@@ -3,6 +3,8 @@ use crate::token::*;
 use crate::visitor::StmtVisitor;
 
 #[derive(Debug, Clone)]
+pub struct Block(pub Vec<Stmt>);
+#[derive(Debug, Clone)]
 pub struct Expression(pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Print(pub ExprP);
@@ -12,6 +14,7 @@ pub struct Var(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum Stmt {
+    Block_(Block),
     Expression_(Expression),
     Print_(Print),
     Var_(Var),
@@ -21,6 +24,10 @@ pub enum Stmt {
 }
 
 impl Stmt {
+    pub fn block(statements: Vec<Self>) -> Self {
+        Self::Block_(Block(statements))
+    }
+
     pub fn expression(expr: Expr) -> Self {
         Self::Expression_(Expression(Box::new(expr)))
     }
@@ -45,6 +52,7 @@ impl Stmt {
     {
         use Stmt::*;
         match self {
+            Block_(stmt) => visitor.visit_block(stmt),
             Expression_(stmt) => visitor.visit_expression(stmt),
             Print_(stmt) => visitor.visit_print(stmt),
             Var_(stmt) => visitor.visit_var(stmt),

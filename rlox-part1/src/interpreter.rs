@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::environment::Environment;
 use crate::errors::RuntimeError;
@@ -10,13 +11,13 @@ use crate::visitor::*;
 
 #[derive(Debug)]
 pub struct Interpreter {
-    environment: RefCell<Environment>,
+    environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: RefCell::new(Environment::new()),
+            environment: Rc::new(RefCell::new(Environment::new(None))),
         }
     }
 
@@ -26,6 +27,27 @@ impl Interpreter {
         }
 
         Ok(())
+    }
+
+    fn execute_block(
+        &self,
+        statements: &[Stmt],
+        environment: Environment,
+    ) -> Result<(), RuntimeError> {
+        let previous = self.environment.clone();
+
+        let res = 'trying: loop {
+            self.environment.replace(environment);
+            for statement in statements.iter() {
+                if let Err(e) = self.execute(statement) {
+                    break 'trying Err(e);
+                }
+            }
+            break Ok(());
+        };
+
+        self.environment.swap(&previous);
+        res
     }
 
     fn execute(&self, stmt: &Stmt) -> Result<(), RuntimeError> {
@@ -76,6 +98,10 @@ impl Interpreter {
 
 impl StmtVisitor for Interpreter {
     type R = Result<(), RuntimeError>;
+
+    fn visit_block(&self, stmt: &Block) -> Self::R {
+        self.execute_block(&stmt.0, Environment::new(Some(self.environment.clone())))
+    }
 
     fn visit_expression(&self, stmt: &crate::stmt::Expression) -> Self::R {
         self.evaluate(stmt.0.as_ref())?;
