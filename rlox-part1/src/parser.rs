@@ -1,10 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::errors::*;
+use crate::errors::*;
 
-use super::expr::Expr;
-use super::token::*;
+use crate::expr::Expr;
+use crate::stmt::Stmt;
+use crate::token::*;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -13,6 +14,7 @@ pub struct Parser {
 }
 
 type ParseResult = Result<Expr, ParseError>;
+type StmtResult = Result<Stmt, ParseError>;
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
@@ -20,8 +22,35 @@ impl Parser {
         Self { tokens, current }
     }
 
-    pub fn parse(&self) -> Option<Expr> {
-        self.expression().ok()
+    pub fn parse(&self) -> Result<Vec<Stmt>, ParseError> {
+        let mut statements = Vec::new();
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+
+        Ok(statements)
+    }
+
+    fn statement(&self) -> StmtResult {
+        if self.matching(&[TokenType::PRINT]) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    fn expression_statement(&self) -> StmtResult {
+        let expr = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "Expect ';' after expression.")?;
+
+        Ok(Stmt::expression(expr))
+    }
+
+    fn print_statement(&self) -> StmtResult {
+        let value = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "Expect ';' after value.")?;
+
+        Ok(Stmt::print(value))
     }
 
     fn expression(&self) -> ParseResult {

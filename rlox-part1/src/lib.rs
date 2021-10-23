@@ -14,6 +14,7 @@ pub mod expr;
 pub mod interpreter;
 pub mod parser;
 pub mod scanner;
+pub mod stmt;
 pub mod token;
 pub mod value;
 pub mod visitor;
@@ -73,15 +74,15 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
     scanner.scan_tokens()?;
 
     let parser = Parser::new(scanner.tokens);
-    if let Some(expression) = parser.parse() {
-        if let Some(_) = std::env::var_os("LOX_DEBUG") {
-            println!(
-                "[DEBUG] AST: {}",
-                ast_printer::AstPrinter {}.print(&expression)
-            );
-        }
+    if let Ok(statements) = parser.parse() {
+        // if let Some(_) = std::env::var_os("LOX_DEBUG") {
+        //     println!(
+        //         "[DEBUG] AST: {}",
+        //         ast_printer::AstPrinter {}.print(&expression)
+        //     );
+        // }
 
-        Interpreter {}.interpret(&expression)?;
+        Interpreter {}.interpret(&statements)?;
     }
 
     Ok(())

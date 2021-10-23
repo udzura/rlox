@@ -1,22 +1,24 @@
 use super::value::Value;
-use super::visitor::ExprVisitor;
+use super::visitor::*;
 use crate::errors::RuntimeError;
 use crate::expr::*;
+use crate::stmt::*;
 use crate::token::*;
 
 #[derive(Debug)]
 pub struct Interpreter {}
 
 impl Interpreter {
-    pub fn interpret(&self, expr: &Expr) -> Result<(), RuntimeError> {
-        match self.evaluate(expr) {
-            // FIXME: impl Display for Value
-            Ok(value) => {
-                println!("{}", value);
-                Ok(())
-            }
-            Err(err) => Err(err),
+    pub fn interpret(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
+        for statement in statements.iter() {
+            self.execute(statement)?;
         }
+
+        Ok(())
+    }
+
+    fn execute(&self, stmt: &Stmt) -> Result<(), RuntimeError> {
+        stmt.accept(self)
     }
 
     fn evaluate(&self, expr: &Expr) -> Result<Value, RuntimeError> {
@@ -58,6 +60,21 @@ impl Interpreter {
                 "Operand must be a number.",
             ));
         };
+    }
+}
+
+impl StmtVisitor for Interpreter {
+    type R = Result<(), RuntimeError>;
+
+    fn visit_expression(&self, stmt: &crate::stmt::Expression) -> Self::R {
+        self.evaluate(stmt.0.as_ref())?;
+        Ok(())
+    }
+
+    fn visit_print(&self, stmt: &crate::stmt::Print) -> Self::R {
+        let value: Value = self.evaluate(stmt.0.as_ref())?;
+        println!("{}", value);
+        Ok(())
     }
 }
 
