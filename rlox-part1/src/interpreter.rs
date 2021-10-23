@@ -99,6 +99,9 @@ impl Visitor for Interpreter {
             }
             SLASH => {
                 let (left, right) = self.check_number_operands(operator, &left, &right)?;
+                if right == 0f64 {
+                    return Err(RuntimeError::raise(operator.clone(), "Devided by 0"));
+                }
                 return Ok(Value::Number(left / right));
             }
             STAR => {
