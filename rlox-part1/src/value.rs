@@ -1,4 +1,5 @@
 use crate::token::Literal;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
@@ -26,6 +27,18 @@ impl Value {
             Some(Self::Number(n))
         } else {
             None
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Value::*;
+        match self {
+            Nil => write!(f, "nil"),
+            Boolean(b) => write!(f, "{}", if *b { "true" } else { "false" }),
+            Number(n) => write!(f, "{}", n),
+            LoxString(s) => write!(f, "{}", s),
         }
     }
 }

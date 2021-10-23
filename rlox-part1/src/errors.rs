@@ -72,7 +72,11 @@ impl RuntimeError {
 
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
+        write!(
+            f,
+            "RuntimeError: {}\n[line {}]",
+            self.message, self.token.line
+        )
     }
 }
 

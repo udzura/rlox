@@ -12,7 +12,7 @@ impl Interpreter {
         match self.evaluate(expr) {
             // FIXME: impl Display for Value
             Ok(value) => {
-                println!("{:?}", value);
+                println!("{}", value);
                 Ok(())
             }
             Err(err) => Err(err),
@@ -90,7 +90,7 @@ impl Visitor for Interpreter {
             BANG_EQUAL => {
                 return Ok(Value::Boolean(left != right));
             }
-            EQUAL => {
+            EQUAL_EQUAL => {
                 return Ok(Value::Boolean(left == right));
             }
             MINUS => {

@@ -74,8 +74,14 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
 
     let parser = Parser::new(scanner.tokens);
     if let Some(expression) = parser.parse() {
+        if let Some(_) = std::env::var_os("LOX_DEBUG") {
+            println!(
+                "[DEBUG] AST: {}",
+                ast_printer::AstPrinter {}.print(&expression)
+            );
+        }
+
         Interpreter {}.interpret(&expression)?;
-        // println!("{}", ast_printer::AstPrinter {}.print(&expression));
     }
 
     Ok(())
