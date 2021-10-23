@@ -1,5 +1,5 @@
 use super::value::Value;
-use super::visitor::Visitor;
+use super::visitor::ExprVisitor;
 use crate::errors::RuntimeError;
 use crate::expr::*;
 use crate::token::*;
@@ -61,7 +61,7 @@ impl Interpreter {
     }
 }
 
-impl Visitor for Interpreter {
+impl ExprVisitor for Interpreter {
     type R = Result<Value, RuntimeError>;
 
     fn visit_binary(&self, expr: &Binary) -> Self::R {

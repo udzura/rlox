@@ -1,6 +1,6 @@
 use super::expr::*;
 
-pub trait Visitor {
+pub trait ExprVisitor {
     type R;
 
     fn visit_binary(&self, expr: &Binary) -> Self::R;

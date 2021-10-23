@@ -1,5 +1,5 @@
 use super::expr::*;
-use super::visitor::Visitor;
+use super::visitor::ExprVisitor;
 
 pub struct AstPrinter {}
 
@@ -23,7 +23,7 @@ impl AstPrinter {
     }
 }
 
-impl Visitor for AstPrinter {
+impl ExprVisitor for AstPrinter {
     type R = String;
 
     fn visit_binary(&self, expr: &Binary) -> Self::R {

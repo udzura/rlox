@@ -1,5 +1,5 @@
 use super::token::{Literal, Token};
-use super::visitor::Visitor;
+use super::visitor::ExprVisitor;
 
 pub type ExprP = Box<Expr>;
 pub type TokenP = Box<Token>;
@@ -43,9 +43,9 @@ impl Expr {
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: &T) -> <T as Visitor>::R
+    pub fn accept<T>(&self, visitor: &T) -> <T as ExprVisitor>::R
     where
-        T: Visitor,
+        T: ExprVisitor,
     {
         use Expr::*;
         match self {
