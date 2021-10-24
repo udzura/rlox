@@ -29,15 +29,14 @@ impl Interpreter {
         Ok(())
     }
 
-    fn execute_block(
-        &self,
-        statements: &[Stmt],
-        environment: Environment,
-    ) -> Result<(), RuntimeError> {
-        let previous = self.environment.clone();
+    fn execute_block(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
+        let environment = self.environment.take();
+        let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
+        let replacement = RefCell::new(environment);
+        self.environment.swap(&replacement);
+        dbg!(&self.environment);
 
         let res = 'trying: loop {
-            self.environment.replace(environment);
             for statement in statements.iter() {
                 if let Err(e) = self.execute(statement) {
                     break 'trying Err(e);
@@ -46,7 +45,14 @@ impl Interpreter {
             break Ok(());
         };
 
-        self.environment.swap(&previous);
+        let environment = self.environment.take();
+        if let Some(enclosing) = environment.take_enclosing() {
+            let replacement = RefCell::new(enclosing);
+            self.environment.swap(&replacement);
+            dbg!(&self.environment);
+        } else {
+            panic!("BUG: missing enclosure");
+        }
         res
     }
 
@@ -100,7 +106,7 @@ impl StmtVisitor for Interpreter {
     type R = Result<(), RuntimeError>;
 
     fn visit_block(&self, stmt: &Block) -> Self::R {
-        self.execute_block(&stmt.0, Environment::new(Some(self.environment.clone())))
+        self.execute_block(&stmt.0)
     }
 
     fn visit_expression(&self, stmt: &crate::stmt::Expression) -> Self::R {

@@ -8,8 +8,8 @@ use crate::value::Value;
 
 #[derive(Debug, Default)]
 pub struct Environment {
-    enclosing: Option<Rc<RefCell<Environment>>>,
-    values: HashMap<String, Value>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
+    pub values: HashMap<String, Value>,
 }
 
 impl Environment {
@@ -53,6 +53,13 @@ impl Environment {
                 name.clone(),
                 format!("Undefined variable '{}'.", k),
             ))
+        }
+    }
+
+    pub fn take_enclosing(&self) -> Option<Environment> {
+        match &self.enclosing {
+            Some(environment) => Some(environment.take()),
+            None => None,
         }
     }
 }
