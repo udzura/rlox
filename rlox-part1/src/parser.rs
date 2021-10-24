@@ -119,7 +119,7 @@ impl Parser {
     }
 
     fn assignment(&self) -> ParseResult {
-        let expr = self.equality()?;
+        let expr = self.or()?;
 
         if self.matching(&[TokenType::EQUAL]) {
             let equals = self.previous();
@@ -135,6 +135,28 @@ impl Parser {
         }
 
         return Ok(expr);
+    }
+
+    fn or(&self) -> ParseResult {
+        let mut expr = self.and()?;
+
+        if self.matching(&[TokenType::OR]) {
+            let operator = self.previous();
+            let right = self.and()?;
+            expr = Expr::logical(expr, operator.clone(), right);
+        }
+        Ok(expr)
+    }
+
+    fn and(&self) -> ParseResult {
+        let mut expr = self.equality()?;
+
+        if self.matching(&[TokenType::AND]) {
+            let operator = self.previous();
+            let right = self.equality()?;
+            expr = Expr::logical(expr, operator.clone(), right);
+        }
+        Ok(expr)
     }
 
     fn equality(&self) -> ParseResult {

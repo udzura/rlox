@@ -59,7 +59,7 @@ impl ExprVisitor for AstPrinter {
         todo!()
     }
 
-    fn visit_logical(&self, expr: &Logical) -> Self::R {
+    fn visit_logical(&self, _expr: &Logical) -> Self::R {
         todo!()
     }
 }

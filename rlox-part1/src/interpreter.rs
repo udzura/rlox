@@ -62,11 +62,11 @@ impl Interpreter {
         expr.accept(self)
     }
 
-    fn is_truthy(value: Value) -> bool {
+    fn is_truthy(value: &Value) -> bool {
         use Value::*;
         match value {
             Nil => false,
-            Boolean(b) => b,
+            Boolean(b) => b.to_owned(),
 
             Number(_) | LoxString(_) => true,
         }
@@ -113,7 +113,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_if(&self, stmt: &If) -> Self::R {
-        if Self::is_truthy(self.evaluate(stmt.0.as_ref())?) {
+        if Self::is_truthy(&(self.evaluate(stmt.0.as_ref())?)) {
             self.execute(stmt.1.as_ref())
         } else if let Some(boxed) = stmt.2.as_ref() {
             let else_stmt = boxed.as_ref();
@@ -224,13 +224,29 @@ impl ExprVisitor for Interpreter {
         Ok(expr.0.as_ref().into())
     }
 
+    fn visit_logical(&self, expr: &Logical) -> Self::R {
+        let left = self.evaluate(expr.0.as_ref())?;
+
+        if expr.1.as_ref().token_type == TokenType::OR {
+            if Self::is_truthy(&left) {
+                return Ok(left);
+            }
+        } else {
+            if !Self::is_truthy(&left) {
+                return Ok(left);
+            }
+        }
+
+        self.evaluate(expr.2.as_ref())
+    }
+
     fn visit_unary(&self, expr: &Unary) -> Self::R {
         use TokenType::*;
 
         let right = self.evaluate(expr.1.as_ref())?;
         match expr.0.as_ref().token_type {
             BANG => {
-                let b = Self::is_truthy(right);
+                let b = Self::is_truthy(&right);
                 return Ok(Value::Boolean(!b));
             }
             MINUS => {
@@ -249,9 +265,5 @@ impl ExprVisitor for Interpreter {
         let environment = self.environment.borrow();
         let v = environment.get(expr.0.as_ref())?;
         Ok(v.clone())
-    }
-
-    fn visit_logical(&self, expr: &Logical) -> Self::R {
-        todo!()
     }
 }
