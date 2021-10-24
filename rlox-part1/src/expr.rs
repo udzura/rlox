@@ -14,6 +14,8 @@ pub struct Grouping(pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Lit(pub LiteralP);
 #[derive(Debug, Clone)]
+pub struct Logical(pub ExprP, pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
 pub struct Unary(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Variable(pub TokenP);
@@ -25,6 +27,7 @@ pub enum Expr {
     Binary_(Binary),
     Grouping_(Grouping),
     Literal_(Lit),
+    Logical_(Logical),
     Unary_(Unary),
     Variable_(Variable),
 
@@ -48,6 +51,10 @@ impl Expr {
         Self::Literal_(Lit(Box::new(literal)))
     }
 
+    pub fn logical(left: Self, operator: Token, right: Self) -> Self {
+        Self::Logical_(Logical(Box::new(left), Box::new(operator), Box::new(right)))
+    }
+
     pub fn unary(operator: Token, right: Self) -> Self {
         Self::Unary_(Unary(Box::new(operator), Box::new(right)))
     }
@@ -68,6 +75,7 @@ impl Expr {
             Binary_(expr) => visitor.visit_binary(expr),
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
+            Logical_(expr) => visitor.visit_logical(expr),
             Unary_(expr) => visitor.visit_unary(expr),
             Variable_(expr) => visitor.visit_variable(expr),
             _ => panic!("[BUG] invalid type of expr."),

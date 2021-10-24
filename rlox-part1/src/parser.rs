@@ -61,6 +61,9 @@ impl Parser {
     }
 
     fn statement(&self) -> StmtResult {
+        if self.matching(&[TokenType::IF]) {
+            return self.if_statement();
+        }
         if self.matching(&[TokenType::PRINT]) {
             return self.print_statement();
         }
@@ -87,6 +90,21 @@ impl Parser {
         self.consume(TokenType::SEMICOLON, "Expect ';' after expression.")?;
 
         Ok(Stmt::expression(expr))
+    }
+
+    fn if_statement(&self) -> StmtResult {
+        self.consume(TokenType::LEFT_PAREN, "Expect '(' after if.")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "Expect ')' after if cond.")?;
+
+        let then_stmt = self.statement()?;
+        let else_stmt = if self.matching(&[TokenType::ELSE]) {
+            Some(self.statement()?)
+        } else {
+            None
+        };
+
+        Ok(Stmt::if_stmt(condition, then_stmt, else_stmt))
     }
 
     fn print_statement(&self) -> StmtResult {

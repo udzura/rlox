@@ -112,6 +112,17 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
 
+    fn visit_if(&self, stmt: &If) -> Self::R {
+        if Self::is_truthy(self.evaluate(stmt.0.as_ref())?) {
+            self.execute(stmt.1.as_ref())
+        } else if let Some(boxed) = stmt.2.as_ref() {
+            let else_stmt = boxed.as_ref();
+            self.execute(else_stmt)
+        } else {
+            Ok(())
+        }
+    }
+
     fn visit_print(&self, stmt: &crate::stmt::Print) -> Self::R {
         let value: Value = self.evaluate(stmt.0.as_ref())?;
         println!("{}", value);
@@ -238,5 +249,9 @@ impl ExprVisitor for Interpreter {
         let environment = self.environment.borrow();
         let v = environment.get(expr.0.as_ref())?;
         Ok(v.clone())
+    }
+
+    fn visit_logical(&self, expr: &Logical) -> Self::R {
+        todo!()
     }
 }
