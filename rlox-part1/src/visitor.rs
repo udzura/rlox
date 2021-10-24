@@ -21,6 +21,7 @@ pub trait StmtVisitor {
     fn visit_if(&self, stmt: &If) -> Self::R;
     fn visit_print(&self, stmt: &Print) -> Self::R;
     fn visit_var(&self, stmt: &Var) -> Self::R;
+    fn visit_while(&self, stmt: &While) -> Self::R;
 
     fn visit_null(&self) -> Self::R;
 }

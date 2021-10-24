@@ -67,6 +67,9 @@ impl Parser {
         if self.matching(&[TokenType::PRINT]) {
             return self.print_statement();
         }
+        if self.matching(&[TokenType::WHILE]) {
+            return self.while_declaration();
+        }
         if self.matching(&[TokenType::LEFT_BRACE]) {
             return Ok(Stmt::block(self.block()?));
         }
@@ -105,6 +108,15 @@ impl Parser {
         };
 
         Ok(Stmt::if_stmt(condition, then_stmt, else_stmt))
+    }
+
+    fn while_declaration(&self) -> StmtResult {
+        self.consume(TokenType::LEFT_PAREN, "Expect '(' after whie.")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "Expect ')' after while cond.")?;
+        let body = self.statement()?;
+
+        Ok(Stmt::while_stmt(condition, body))
     }
 
     fn print_statement(&self) -> StmtResult {

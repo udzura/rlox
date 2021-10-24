@@ -123,6 +123,14 @@ impl StmtVisitor for Interpreter {
         }
     }
 
+    fn visit_while(&self, stmt: &While) -> Self::R {
+        let cond = stmt.0.as_ref();
+        while Self::is_truthy(&(self.evaluate(cond)?)) {
+            self.execute(stmt.1.as_ref())?;
+        }
+        Ok(())
+    }
+
     fn visit_print(&self, stmt: &crate::stmt::Print) -> Self::R {
         let value: Value = self.evaluate(stmt.0.as_ref())?;
         println!("{}", value);
