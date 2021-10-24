@@ -274,4 +274,8 @@ impl ExprVisitor for Interpreter {
         let v = environment.get(expr.0.as_ref())?;
         Ok(v.clone())
     }
+
+    fn visit_null(&self) -> Self::R {
+        Ok(Value::Nil)
+    }
 }

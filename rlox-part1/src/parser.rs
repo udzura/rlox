@@ -61,6 +61,9 @@ impl Parser {
     }
 
     fn statement(&self) -> StmtResult {
+        if self.matching(&[TokenType::FOR]) {
+            return self.for_statement();
+        }
         if self.matching(&[TokenType::IF]) {
             return self.if_statement();
         }
@@ -68,7 +71,7 @@ impl Parser {
             return self.print_statement();
         }
         if self.matching(&[TokenType::WHILE]) {
-            return self.while_declaration();
+            return self.while_statement();
         }
         if self.matching(&[TokenType::LEFT_BRACE]) {
             return Ok(Stmt::block(self.block()?));
@@ -110,13 +113,55 @@ impl Parser {
         Ok(Stmt::if_stmt(condition, then_stmt, else_stmt))
     }
 
-    fn while_declaration(&self) -> StmtResult {
-        self.consume(TokenType::LEFT_PAREN, "Expect '(' after whie.")?;
+    fn while_statement(&self) -> StmtResult {
+        self.consume(TokenType::LEFT_PAREN, "Expect '(' after while.")?;
         let condition = self.expression()?;
         self.consume(TokenType::RIGHT_PAREN, "Expect ')' after while cond.")?;
         let body = self.statement()?;
 
         Ok(Stmt::while_stmt(condition, body))
+    }
+
+    fn for_statement(&self) -> StmtResult {
+        self.consume(TokenType::LEFT_PAREN, "Expect '(' after for.")?;
+
+        let initializer = if self.matching(&[TokenType::SEMICOLON]) {
+            Stmt::null()
+        } else if self.matching(&[TokenType::VAR]) {
+            self.var_declaration()?
+        } else {
+            self.expression_statement()?
+        };
+
+        let condition = if self.check(TokenType::SEMICOLON) {
+            Expr::literal(Literal::Bool(true))
+        } else {
+            self.expression()?
+        };
+        self.consume(TokenType::SEMICOLON, "Expect ';' after loop cond.")?;
+
+        let increment = if self.check(TokenType::RIGHT_PAREN) {
+            Expr::null()
+        } else {
+            self.expression()?
+        };
+        self.consume(TokenType::RIGHT_PAREN, "Expect '}' after loop incr.")?;
+
+        let mut body = self.statement()?;
+
+        match increment {
+            Expr::Null => {}
+            increment => body = Stmt::block(vec![body, Stmt::expression(increment)]),
+        }
+
+        body = Stmt::while_stmt(condition, body);
+
+        match initializer {
+            Stmt::Null => {}
+            initializer => body = Stmt::block(vec![initializer, body]),
+        }
+
+        Ok(body)
     }
 
     fn print_statement(&self) -> StmtResult {

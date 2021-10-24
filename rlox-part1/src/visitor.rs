@@ -11,6 +11,8 @@ pub trait ExprVisitor {
     fn visit_logical(&self, expr: &Logical) -> Self::R;
     fn visit_unary(&self, expr: &Unary) -> Self::R;
     fn visit_variable(&self, expr: &Variable) -> Self::R;
+
+    fn visit_null(&self) -> Self::R;
 }
 
 pub trait StmtVisitor {

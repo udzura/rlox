@@ -31,6 +31,7 @@ pub enum Expr {
     Unary_(Unary),
     Variable_(Variable),
 
+    Null,
     Dummy,
 }
 
@@ -62,6 +63,10 @@ impl Expr {
     pub fn variable(name: Token) -> Self {
         Self::Variable_(Variable(Box::new(name)))
     }
+
+    pub fn null() -> Self {
+        Self::Null
+    }
 }
 
 impl Expr {
@@ -78,6 +83,7 @@ impl Expr {
             Logical_(expr) => visitor.visit_logical(expr),
             Unary_(expr) => visitor.visit_unary(expr),
             Variable_(expr) => visitor.visit_variable(expr),
+            Null => visitor.visit_null(),
             _ => panic!("[BUG] invalid type of expr."),
         }
     }

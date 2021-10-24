@@ -56,10 +56,14 @@ impl ExprVisitor for AstPrinter {
     }
 
     fn visit_variable(&self, _expr: &Variable) -> Self::R {
-        todo!()
+        "".to_string()
     }
 
     fn visit_logical(&self, _expr: &Logical) -> Self::R {
+        todo!()
+    }
+
+    fn visit_null(&self) -> Self::R {
         todo!()
     }
 }
