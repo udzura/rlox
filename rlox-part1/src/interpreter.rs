@@ -34,7 +34,6 @@ impl Interpreter {
         let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
         let replacement = RefCell::new(environment);
         self.environment.swap(&replacement);
-        dbg!(&self.environment);
 
         let res = 'trying: loop {
             for statement in statements.iter() {
@@ -49,7 +48,6 @@ impl Interpreter {
         if let Some(enclosing) = environment.take_enclosing() {
             let replacement = RefCell::new(enclosing);
             self.environment.swap(&replacement);
-            dbg!(&self.environment);
         } else {
             panic!("BUG: missing enclosure");
         }
