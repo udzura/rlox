@@ -1,0 +1,13 @@
+fun add(a, b, c) {
+  print a + b + c;
+}
+
+print("add ->");
+add(1, 2, 3);
+
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+print("sayHi ->");
+sayHi("Dear", "Reader");

@@ -13,8 +13,8 @@ use crate::visitor::*;
 
 #[derive(Debug)]
 pub struct Interpreter {
-    globals: Rc<RefCell<Environment>>,
-    environment: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
+    pub environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
@@ -50,7 +50,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn execute_block(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
+    pub fn execute_block(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
         let environment = self.environment.take();
         let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
         let replacement = RefCell::new(environment);
@@ -130,6 +130,15 @@ impl StmtVisitor for Interpreter {
 
     fn visit_expression(&self, stmt: &crate::stmt::Expression) -> Self::R {
         self.evaluate(stmt.0.as_ref())?;
+        Ok(())
+    }
+
+    fn visit_fun(&self, stmt: &Fun) -> Self::R {
+        let name = &stmt.0.as_ref().lexeme;
+        let function = Function::new_lox(stmt.clone());
+        let value = Value::LoxFunction(function);
+        self.environment.borrow_mut().define(name, value);
+
         Ok(())
     }
 

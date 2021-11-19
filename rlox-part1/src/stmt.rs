@@ -10,6 +10,8 @@ pub struct Block(pub Statements);
 #[derive(Debug, Clone)]
 pub struct Expression(pub ExprP);
 #[derive(Debug, Clone)]
+pub struct Fun(pub TokenP, pub Vec<Token>, pub Statements);
+#[derive(Debug, Clone)]
 pub struct If(pub ExprP, pub StmtP, pub Option<StmtP>);
 #[derive(Debug, Clone)]
 pub struct Print(pub ExprP);
@@ -23,6 +25,7 @@ pub struct While(pub ExprP, pub StmtP);
 pub enum Stmt {
     Block_(Block),
     Expression_(Expression),
+    Fun_(Fun),
     If_(If),
     Print_(Print),
     Var_(Var),
@@ -39,6 +42,10 @@ impl Stmt {
 
     pub fn expression(expr: Expr) -> Self {
         Self::Expression_(Expression(Box::new(expr)))
+    }
+
+    pub fn fun(name: Token, params: Vec<Token>, body: Statements) -> Self {
+        Self::Fun_(Fun(Box::new(name), params, body))
     }
 
     pub fn if_stmt(condition: Expr, then_branch: Self, else_branch: Option<Self>) -> Self {
@@ -75,6 +82,7 @@ impl Stmt {
         match self {
             Block_(stmt) => visitor.visit_block(stmt),
             Expression_(stmt) => visitor.visit_expression(stmt),
+            Fun_(stmt) => visitor.visit_fun(stmt),
             If_(stmt) => visitor.visit_if(stmt),
             Print_(stmt) => visitor.visit_print(stmt),
             Var_(stmt) => visitor.visit_var(stmt),

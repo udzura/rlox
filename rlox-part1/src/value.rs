@@ -1,7 +1,10 @@
 use crate::callable::Callable;
+use crate::environment::Environment;
 use crate::interpreter::Interpreter;
-use crate::stmt::Stmt;
+use crate::stmt::Fun;
+//use crate::stmt::Stmt;
 use crate::token::Literal;
+use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
@@ -54,7 +57,7 @@ pub struct Function {
     pub name: String,
     arity_nr: u8,
     native: Option<fn(&Interpreter, &[Value]) -> Value>,
-    declaration: Option<Rc<Stmt>>,
+    declaration: Option<Rc<Fun>>,
 }
 
 impl Function {
@@ -68,6 +71,18 @@ impl Function {
             arity_nr: arity_nr,
             native: Some(native),
             declaration: None,
+        }
+    }
+
+    pub fn new_lox(declaration: Fun) -> Self {
+        let name = declaration.0.as_ref().lexeme.clone();
+        let arity_nr = declaration.1.len() as u8;
+        let declaration = Some(Rc::new(declaration));
+        Function {
+            name,
+            arity_nr,
+            native: None,
+            declaration: declaration,
         }
     }
 }
@@ -89,10 +104,22 @@ impl Callable for Function {
     }
 
     fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Value {
-        if self.native.is_some() {
-            self.native.unwrap()(interpreter, arguments)
-        } else if self.declaration.is_some() {
-            todo!()
+        if let Some(native) = self.native {
+            native(interpreter, arguments)
+        } else if let Some(declaration) = &self.declaration {
+            let mut environment = Environment::new(Some(interpreter.globals.clone()));
+            for i in 0..(self.arity_nr as usize) {
+                environment.define(
+                    &declaration.1.get(i as usize).unwrap().lexeme,
+                    arguments.get(i).unwrap().clone(),
+                )
+            }
+
+            let replacement = RefCell::new(environment);
+            interpreter.environment.swap(&replacement);
+            interpreter.execute_block(&declaration.2).unwrap();
+            interpreter.environment.swap(&replacement);
+            return Value::Nil;
         } else {
             panic!("[BUG] invalid function decleration")
         }

@@ -32,7 +32,9 @@ impl Parser {
     }
 
     fn declaration(&self) -> StmtResult {
-        match if self.matching(&[TokenType::VAR]) {
+        match if self.matching(&[TokenType::FUN]) {
+            self.function("function")
+        } else if self.matching(&[TokenType::VAR]) {
             self.var_declaration()
         } else {
             self.statement()
@@ -43,6 +45,43 @@ impl Parser {
                 Ok(Stmt::null())
             }
         }
+    }
+
+    fn function(&self, kind: &str) -> StmtResult {
+        let name = self
+            .consume(TokenType::IDENTIFIER, format!("Expect {} name.", kind))?
+            .clone();
+        self.consume(
+            TokenType::LEFT_PAREN,
+            format!("Expect '(' after {} name.", kind),
+        )?;
+
+        let mut parameters: Vec<Token> = vec![];
+        if !self.check(TokenType::RIGHT_PAREN) {
+            loop {
+                if parameters.len() >= 255 {
+                    ScanError::report(self.peek(), "Can't have more than 255 arguments.");
+                    return Err(ParseError::raise());
+                }
+
+                parameters.push(
+                    self.consume(TokenType::IDENTIFIER, "Expect parameter name.")?
+                        .clone(),
+                );
+                if !self.matching(&[TokenType::COMMA]) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.")?;
+        self.consume(
+            TokenType::LEFT_BRACE,
+            format!("Expect {{ before {} body.", kind),
+        )?;
+        let body: Vec<Stmt> = self.block()?;
+
+        return Ok(Stmt::fun(name, parameters, body));
     }
 
     fn var_declaration(&self) -> StmtResult {
