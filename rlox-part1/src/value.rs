@@ -1,5 +1,9 @@
+use crate::callable::Callable;
+use crate::interpreter::Interpreter;
+use crate::stmt::Stmt;
 use crate::token::Literal;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
@@ -9,6 +13,7 @@ pub enum Value {
     Boolean(bool),
     Number(f64),
     LoxString(String),
+    LoxFunction(Function),
 }
 
 impl From<&Literal> for Value {
@@ -39,6 +44,29 @@ impl fmt::Display for Value {
             Boolean(b) => write!(f, "{}", if *b { "true" } else { "false" }),
             Number(n) => write!(f, "{}", n),
             LoxString(s) => write!(f, "{}", s),
+            LoxFunction(fun) => write!(f, "#<Function: {}>", &fun.name),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub name: String,
+    declaration: Rc<Stmt>,
+}
+
+impl Callable for Function {
+    fn arity() -> u8 {
+        todo!()
+    }
+
+    fn call(interpreter: Interpreter, arguments: Vec<Value>) -> Value {
+        todo!()
+    }
+}
+
+impl PartialEq for Function {
+    fn eq(&self, other: &Self) -> bool {
+        todo!()
     }
 }

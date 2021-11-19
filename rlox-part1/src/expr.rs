@@ -2,6 +2,7 @@ use super::token::{Literal, Token};
 use super::visitor::ExprVisitor;
 
 pub type ExprP = Box<Expr>;
+pub type ExprV = Vec<Expr>;
 pub type TokenP = Box<Token>;
 pub type LiteralP = Box<Literal>;
 
@@ -9,6 +10,8 @@ pub type LiteralP = Box<Literal>;
 pub struct Assign(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Binary(pub ExprP, pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
+pub struct Call(pub ExprP, pub ExprV);
 #[derive(Debug, Clone)]
 pub struct Grouping(pub ExprP);
 #[derive(Debug, Clone)]
@@ -25,6 +28,7 @@ pub struct Variable(pub TokenP);
 pub enum Expr {
     Assign_(Assign),
     Binary_(Binary),
+    Call_(Call),
     Grouping_(Grouping),
     Literal_(Lit),
     Logical_(Logical),
@@ -42,6 +46,10 @@ impl Expr {
 
     pub fn binary(left: Self, operator: Token, right: Self) -> Self {
         Self::Binary_(Binary(Box::new(left), Box::new(operator), Box::new(right)))
+    }
+
+    pub fn call(callee: Self, arguments: Vec<Self>) -> Self {
+        Self::Call_(Call(Box::new(callee), arguments))
     }
 
     pub fn grouping(expr: Self) -> Self {
@@ -78,6 +86,7 @@ impl Expr {
         match self {
             Assign_(expr) => visitor.visit_assign(expr),
             Binary_(expr) => visitor.visit_binary(expr),
+            Call_(expr) => visitor.visit_call(expr),
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
             Logical_(expr) => visitor.visit_logical(expr),

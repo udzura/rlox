@@ -6,6 +6,7 @@ pub trait ExprVisitor {
 
     fn visit_assign(&self, expr: &Assign) -> Self::R;
     fn visit_binary(&self, expr: &Binary) -> Self::R;
+    fn visit_call(&self, expr: &Call) -> Self::R;
     fn visit_grouping(&self, expr: &Grouping) -> Self::R;
     fn visit_literal(&self, expr: &Lit) -> Self::R;
     fn visit_logical(&self, expr: &Logical) -> Self::R;

@@ -68,7 +68,7 @@ impl Interpreter {
             Nil => false,
             Boolean(b) => b.to_owned(),
 
-            Number(_) | LoxString(_) => true,
+            _ => true,
         }
     }
 
@@ -222,6 +222,15 @@ impl ExprVisitor for Interpreter {
                 unreachable!("[BUG] Maybe a parser bug");
             }
         }
+    }
+
+    fn visit_call(&self, expr: &Call) -> Self::R {
+        let callee = self.evaluate(expr.0.as_ref())?;
+        let mut arguments: Vec<Value> = vec![];
+        for v in expr.1.iter() {
+            arguments.push(self.evaluate(v)?);
+        }
+        Ok(callee)
     }
 
     fn visit_grouping(&self, expr: &Grouping) -> Self::R {
