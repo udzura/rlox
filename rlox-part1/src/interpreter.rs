@@ -50,9 +50,13 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn execute_block(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
-        let environment = self.environment.take();
-        let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
+    pub fn execute_block(
+        &self,
+        statements: &[Stmt],
+        environment: Environment,
+    ) -> Result<(), RuntimeError> {
+        // let environment = self.environment.take();
+        // let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
         let replacement = RefCell::new(environment);
         self.environment.swap(&replacement);
 
@@ -125,7 +129,9 @@ impl StmtVisitor for Interpreter {
     type R = Result<(), RuntimeError>;
 
     fn visit_block(&self, stmt: &Block) -> Self::R {
-        self.execute_block(&stmt.0)
+        let environment = self.environment.take();
+        let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
+        self.execute_block(&stmt.0, environment)
     }
 
     fn visit_expression(&self, stmt: &crate::stmt::Expression) -> Self::R {

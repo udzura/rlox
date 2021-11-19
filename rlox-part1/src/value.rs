@@ -115,10 +115,12 @@ impl Callable for Function {
                 )
             }
 
-            let replacement = RefCell::new(environment);
-            interpreter.environment.swap(&replacement);
-            interpreter.execute_block(&declaration.2).unwrap();
-            interpreter.environment.swap(&replacement);
+            // let replacement = RefCell::new(environment);
+            // interpreter.environment.swap(&replacement);
+            interpreter
+                .execute_block(&declaration.2, environment)
+                .unwrap();
+            // interpreter.environment.swap(&replacement);
             return Value::Nil;
         } else {
             panic!("[BUG] invalid function decleration")
