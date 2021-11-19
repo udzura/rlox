@@ -1,0 +1,9 @@
+print("Start loop...");
+var a = clock();
+for (var i = 1; i < 100000; i = i+1) {
+  var a = a;
+}
+
+var b = clock();
+print("Elapsed:(ms)");
+print(b-a);

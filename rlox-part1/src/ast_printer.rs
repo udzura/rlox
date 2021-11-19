@@ -67,7 +67,7 @@ impl ExprVisitor for AstPrinter {
         todo!()
     }
 
-    fn visit_call(&self, expr: &Call) -> Self::R {
+    fn visit_call(&self, _expr: &Call) -> Self::R {
         todo!()
     }
 }

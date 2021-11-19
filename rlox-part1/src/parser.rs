@@ -295,14 +295,14 @@ impl Parser {
     fn finish_call(&self, callee: Expr) -> ParseResult {
         let mut arguments = Vec::new();
 
-        if self.check(TokenType::RIGHT_PAREN) {
+        if !self.check(TokenType::RIGHT_PAREN) {
             loop {
                 if arguments.len() >= 255 {
                     ScanError::report(self.peek(), "Can't have more than 255 arguments.");
                     return Err(ParseError::raise());
                 }
                 arguments.push(self.expression()?);
-                if self.matching(&[TokenType::COMMA]) {
+                if !self.matching(&[TokenType::COMMA]) {
                     break;
                 }
             }
@@ -310,7 +310,7 @@ impl Parser {
 
         let paren = self.consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.")?;
 
-        Ok(Expr::call(callee, arguments))
+        Ok(Expr::call(callee, paren.clone(), arguments))
     }
 
     fn primary(&self) -> ParseResult {

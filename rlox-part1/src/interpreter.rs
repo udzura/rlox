@@ -1,23 +1,44 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::callable::Callable;
 use crate::environment::Environment;
 use crate::errors::RuntimeError;
 use crate::expr::*;
 use crate::stmt::*;
 use crate::token::*;
+use crate::value::Function;
 use crate::value::Value;
 use crate::visitor::*;
 
 #[derive(Debug)]
 pub struct Interpreter {
+    globals: Rc<RefCell<Environment>>,
     environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let globals = Rc::new(RefCell::new(Environment::new(None)));
+        let environment = globals.clone();
+
+        fn fun_clock(_interpreter: &Interpreter, _arguments: &[Value]) -> Value {
+            use std::time::*;
+            let millis = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64;
+            Value::Number(millis as f64)
+        }
+
+        let function = Function::new_native("clock", 0u8, fun_clock);
+        globals
+            .borrow_mut()
+            .define("clock", Value::LoxFunction(function));
+
         Self {
-            environment: Rc::new(RefCell::new(Environment::new(None))),
+            globals,
+            environment,
         }
     }
 
@@ -227,10 +248,29 @@ impl ExprVisitor for Interpreter {
     fn visit_call(&self, expr: &Call) -> Self::R {
         let callee = self.evaluate(expr.0.as_ref())?;
         let mut arguments: Vec<Value> = vec![];
-        for v in expr.1.iter() {
+        for v in expr.2.iter() {
             arguments.push(self.evaluate(v)?);
         }
-        Ok(callee)
+
+        if let Value::LoxFunction(function) = callee {
+            if arguments.len() != function.arity() as usize {
+                return Err(RuntimeError::raise(
+                    expr.1.as_ref().to_owned(),
+                    &format!(
+                        "Expected {arity} arguments but got {len}.",
+                        arity = function.arity(),
+                        len = arguments.len()
+                    ),
+                ));
+            }
+
+            Ok(function.call(self, &arguments))
+        } else {
+            Err(RuntimeError::raise(
+                expr.1.as_ref().to_owned(),
+                "Can only call functions and classes.",
+            ))
+        }
     }
 
     fn visit_grouping(&self, expr: &Grouping) -> Self::R {

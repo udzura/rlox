@@ -11,7 +11,7 @@ pub struct Assign(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Binary(pub ExprP, pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
-pub struct Call(pub ExprP, pub ExprV);
+pub struct Call(pub ExprP, pub TokenP, pub ExprV);
 #[derive(Debug, Clone)]
 pub struct Grouping(pub ExprP);
 #[derive(Debug, Clone)]
@@ -48,8 +48,8 @@ impl Expr {
         Self::Binary_(Binary(Box::new(left), Box::new(operator), Box::new(right)))
     }
 
-    pub fn call(callee: Self, arguments: Vec<Self>) -> Self {
-        Self::Call_(Call(Box::new(callee), arguments))
+    pub fn call(callee: Self, paren: Token, arguments: Vec<Self>) -> Self {
+        Self::Call_(Call(Box::new(callee), Box::new(paren), arguments))
     }
 
     pub fn grouping(expr: Self) -> Self {

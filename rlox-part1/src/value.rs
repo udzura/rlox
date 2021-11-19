@@ -49,24 +49,58 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Function {
     pub name: String,
-    declaration: Rc<Stmt>,
+    arity_nr: u8,
+    native: Option<fn(&Interpreter, &[Value]) -> Value>,
+    declaration: Option<Rc<Stmt>>,
+}
+
+impl Function {
+    pub fn new_native(
+        name: impl Into<String>,
+        arity_nr: u8,
+        native: fn(&Interpreter, &[Value]) -> Value,
+    ) -> Self {
+        Function {
+            name: name.into(),
+            arity_nr: arity_nr,
+            native: Some(native),
+            declaration: None,
+        }
+    }
+}
+
+impl fmt::Debug for Function {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("")
+            .field(&self.name)
+            .field(&self.arity_nr)
+            .field(&format!("<has native fn: {}>", self.native.is_some()))
+            .field(&self.declaration)
+            .finish()
+    }
 }
 
 impl Callable for Function {
-    fn arity() -> u8 {
-        todo!()
+    fn arity(&self) -> u8 {
+        self.arity_nr
     }
 
-    fn call(interpreter: Interpreter, arguments: Vec<Value>) -> Value {
-        todo!()
+    fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Value {
+        if self.native.is_some() {
+            self.native.unwrap()(interpreter, arguments)
+        } else if self.declaration.is_some() {
+            todo!()
+        } else {
+            panic!("[BUG] invalid function decleration")
+        }
     }
 }
 
 impl PartialEq for Function {
-    fn eq(&self, other: &Self) -> bool {
-        todo!()
+    fn eq(&self, _: &Self) -> bool {
+        false
     }
 }
