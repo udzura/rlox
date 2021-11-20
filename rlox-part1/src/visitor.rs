@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::expr::*;
 use super::stmt::*;
 
@@ -21,7 +23,7 @@ pub trait StmtVisitor {
 
     fn visit_block(&self, stmt: &Block) -> Self::R;
     fn visit_expression(&self, stmt: &Expression) -> Self::R;
-    fn visit_fun(&self, stmt: &Fun) -> Self::R;
+    fn visit_fun(&self, stmt: &Rc<Fun>) -> Self::R;
     fn visit_if(&self, stmt: &If) -> Self::R;
     fn visit_print(&self, stmt: &Print) -> Self::R;
     fn visit_var(&self, stmt: &Var) -> Self::R;

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::expr::*;
 use crate::token::*;
 use crate::visitor::StmtVisitor;
@@ -25,7 +27,7 @@ pub struct While(pub ExprP, pub StmtP);
 pub enum Stmt {
     Block_(Block),
     Expression_(Expression),
-    Fun_(Fun),
+    Fun_(Rc<Fun>),
     If_(If),
     Print_(Print),
     Var_(Var),
@@ -45,7 +47,7 @@ impl Stmt {
     }
 
     pub fn fun(name: Token, params: Vec<Token>, body: Statements) -> Self {
-        Self::Fun_(Fun(Box::new(name), params, body))
+        Self::Fun_(Rc::new(Fun(Box::new(name), params, body)))
     }
 
     pub fn if_stmt(condition: Expr, then_branch: Self, else_branch: Option<Self>) -> Self {

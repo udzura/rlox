@@ -4,7 +4,6 @@ use crate::interpreter::Interpreter;
 use crate::stmt::Fun;
 //use crate::stmt::Stmt;
 use crate::token::Literal;
-use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
@@ -74,10 +73,10 @@ impl Function {
         }
     }
 
-    pub fn new_lox(declaration: Fun) -> Self {
+    pub fn new_lox(declaration: Rc<Fun>) -> Self {
         let name = declaration.0.as_ref().lexeme.clone();
         let arity_nr = declaration.1.len() as u8;
-        let declaration = Some(Rc::new(declaration));
+        let declaration = Some(declaration);
         Function {
             name,
             arity_nr,

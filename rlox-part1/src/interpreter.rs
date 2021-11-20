@@ -139,7 +139,7 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
 
-    fn visit_fun(&self, stmt: &Fun) -> Self::R {
+    fn visit_fun(&self, stmt: &Rc<Fun>) -> Self::R {
         let name = &stmt.0.as_ref().lexeme;
         let function = Function::new_lox(stmt.clone());
         let value = Value::LoxFunction(function);
