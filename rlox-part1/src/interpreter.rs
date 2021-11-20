@@ -185,6 +185,10 @@ impl StmtVisitor for Interpreter {
     fn visit_null(&self) -> Self::R {
         Ok(())
     }
+
+    fn visit_return(&self, stmt: &Return) -> Self::R {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {

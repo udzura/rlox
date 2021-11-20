@@ -18,6 +18,8 @@ pub struct If(pub ExprP, pub StmtP, pub Option<StmtP>);
 #[derive(Debug, Clone)]
 pub struct Print(pub ExprP);
 #[derive(Debug, Clone)]
+pub struct Return(pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
 pub struct Var(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct While(pub ExprP, pub StmtP);
@@ -30,6 +32,7 @@ pub enum Stmt {
     Fun_(Rc<Fun>),
     If_(If),
     Print_(Print),
+    Return_(Return),
     Var_(Var),
     While_(While),
 
@@ -62,6 +65,10 @@ impl Stmt {
         Self::Print_(Print(Box::new(expr)))
     }
 
+    pub fn return_stmt(keyword: Token, value: Expr) -> Self {
+        Self::Return_(Return(Box::new(keyword), Box::new(value)))
+    }
+
     pub fn var(name: Token, initializer: Expr) -> Self {
         Self::Var_(Var(Box::new(name), Box::new(initializer)))
     }
@@ -87,6 +94,7 @@ impl Stmt {
             Fun_(stmt) => visitor.visit_fun(stmt),
             If_(stmt) => visitor.visit_if(stmt),
             Print_(stmt) => visitor.visit_print(stmt),
+            Return_(stmt) => visitor.visit_return(stmt),
             Var_(stmt) => visitor.visit_var(stmt),
             While_(stmt) => visitor.visit_while(stmt),
             Null => visitor.visit_null(),
