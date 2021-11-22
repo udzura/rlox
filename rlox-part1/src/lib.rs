@@ -35,7 +35,7 @@ pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
                 eprintln!("{:?}", e);
                 exit(65);
             }
-            if let Some(e) = e.downcast_ref::<RuntimeError>() {
+            if let Some(e) = e.downcast_ref::<RuntimeBreak>() {
                 eprintln!("{:?}", e);
                 exit(70);
             }

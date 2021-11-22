@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::callable::Callable;
 use crate::environment::Environment;
-use crate::errors::RuntimeError;
+use crate::errors::RuntimeBreak;
 use crate::expr::*;
 use crate::stmt::*;
 use crate::token::*;
@@ -42,7 +42,7 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&self, statements: &[Stmt]) -> Result<(), RuntimeError> {
+    pub fn interpret(&self, statements: &[Stmt]) -> Result<(), RuntimeBreak> {
         for statement in statements.iter() {
             self.execute(statement)?;
         }
@@ -54,7 +54,7 @@ impl Interpreter {
         &self,
         statements: &[Stmt],
         environment: Environment,
-    ) -> Result<(), RuntimeError> {
+    ) -> Result<(), RuntimeBreak> {
         // let environment = self.environment.take();
         // let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
         let replacement = RefCell::new(environment);
@@ -79,11 +79,11 @@ impl Interpreter {
         res
     }
 
-    fn execute(&self, stmt: &Stmt) -> Result<(), RuntimeError> {
+    fn execute(&self, stmt: &Stmt) -> Result<(), RuntimeBreak> {
         stmt.accept(self)
     }
 
-    fn evaluate(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    fn evaluate(&self, expr: &Expr) -> Result<Value, RuntimeBreak> {
         expr.accept(self)
     }
 
@@ -97,10 +97,10 @@ impl Interpreter {
         }
     }
 
-    fn check_number_operand(&self, oprator: &Token, operand: &Value) -> Result<f64, RuntimeError> {
+    fn check_number_operand(&self, oprator: &Token, operand: &Value) -> Result<f64, RuntimeBreak> {
         match operand {
             Value::Number(n) => return Ok(*n),
-            _ => Err(RuntimeError::raise(
+            _ => Err(RuntimeBreak::raise(
                 oprator.clone(),
                 "Operand must be a number.",
             )),
@@ -112,12 +112,12 @@ impl Interpreter {
         oprator: &Token,
         left: &Value,
         right: &Value,
-    ) -> Result<(f64, f64), RuntimeError> {
+    ) -> Result<(f64, f64), RuntimeBreak> {
         use Value::*;
         if let (Number(l), Number(r)) = (left, right) {
             return Ok((*l, *r));
         } else {
-            return Err(RuntimeError::raise(
+            return Err(RuntimeBreak::raise(
                 oprator.clone(),
                 "Operand must be a number.",
             ));
@@ -126,7 +126,7 @@ impl Interpreter {
 }
 
 impl StmtVisitor for Interpreter {
-    type R = Result<(), RuntimeError>;
+    type R = Result<(), RuntimeBreak>;
 
     fn visit_block(&self, stmt: &Block) -> Self::R {
         let environment = self.environment.take();
@@ -192,7 +192,7 @@ impl StmtVisitor for Interpreter {
 }
 
 impl ExprVisitor for Interpreter {
-    type R = Result<Value, RuntimeError>;
+    type R = Result<Value, RuntimeBreak>;
 
     fn visit_assign(&self, expr: &Assign) -> Self::R {
         let value = self.evaluate(expr.1.as_ref())?;
@@ -237,7 +237,7 @@ impl ExprVisitor for Interpreter {
             SLASH => {
                 let (left, right) = self.check_number_operands(operator, &left, &right)?;
                 if right == 0f64 {
-                    return Err(RuntimeError::raise(operator.clone(), "Devided by 0"));
+                    return Err(RuntimeBreak::raise(operator.clone(), "Devided by 0"));
                 }
                 return Ok(Value::Number(left / right));
             }
@@ -252,7 +252,7 @@ impl ExprVisitor for Interpreter {
                 } else if let (LoxString(l), LoxString(r)) = (&left, &right) {
                     return Ok(LoxString(format!("{}{}", l, r)));
                 } else {
-                    return Err(RuntimeError::raise(
+                    return Err(RuntimeBreak::raise(
                         operator.clone(),
                         "Operands must be numbers or strings.",
                     ));
@@ -273,7 +273,7 @@ impl ExprVisitor for Interpreter {
 
         if let Value::LoxFunction(function) = callee {
             if arguments.len() != function.arity() as usize {
-                return Err(RuntimeError::raise(
+                return Err(RuntimeBreak::raise(
                     expr.1.as_ref().to_owned(),
                     &format!(
                         "Expected {arity} arguments but got {len}.",
@@ -285,7 +285,7 @@ impl ExprVisitor for Interpreter {
 
             Ok(function.call(self, &arguments))
         } else {
-            Err(RuntimeError::raise(
+            Err(RuntimeBreak::raise(
                 expr.1.as_ref().to_owned(),
                 "Can only call functions and classes.",
             ))

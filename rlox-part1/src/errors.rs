@@ -1,3 +1,5 @@
+use crate::value::Value;
+
 use super::token::{Token, TokenType};
 use std::error::Error;
 use std::fmt;
@@ -58,26 +60,31 @@ impl fmt::Display for ParseError {
 impl Error for ParseError {}
 
 #[derive(Debug)]
-pub struct RuntimeError {
-    token: Token,
-    message: String,
+pub enum RuntimeBreak {
+    RuntimeError { token: Token, message: String },
+    Return { value: Value },
 }
 
-impl RuntimeError {
+impl RuntimeBreak {
     pub fn raise(token: Token, message: impl Into<String>) -> Self {
         let message = message.into();
-        Self { token, message }
+        Self::RuntimeError { token, message }
+    }
+
+    pub fn ret(value: Value) -> Self {
+        Self::Return { value }
     }
 }
 
-impl fmt::Display for RuntimeError {
+impl fmt::Display for RuntimeBreak {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "RuntimeError: {}\n[line {}]",
-            self.message, self.token.line
-        )
+        match self {
+            RuntimeBreak::RuntimeError { message, token } => {
+                write!(f, "RuntimeError: {}\n[line {}]", message, token.line)
+            }
+            RuntimeBreak::Return { value } => write!(f, "Return: {}", value),
+        }
     }
 }
 
-impl Error for RuntimeError {}
+impl Error for RuntimeBreak {}

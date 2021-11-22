@@ -6,6 +6,7 @@ use crate::errors::*;
 use crate::expr::Expr;
 use crate::stmt::Stmt;
 use crate::token::*;
+use crate::value::Value;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -109,6 +110,9 @@ impl Parser {
         if self.matching(&[TokenType::PRINT]) {
             return self.print_statement();
         }
+        if self.matching(&[TokenType::RETURN]) {
+            return self.return_statement();
+        }
         if self.matching(&[TokenType::WHILE]) {
             return self.while_statement();
         }
@@ -208,6 +212,18 @@ impl Parser {
         self.consume(TokenType::SEMICOLON, "Expect ';' after value.")?;
 
         Ok(Stmt::print(value))
+    }
+
+    fn return_statement(&self) -> StmtResult {
+        let keyword = self.previous();
+        let value: Expr = if self.check(TokenType::SEMICOLON) {
+            Expr::literal(Literal::Nil)
+        } else {
+            self.expression()?
+        };
+        self.consume(TokenType::SEMICOLON, "Expect ';' after return value.")?;
+
+        Ok(Stmt::return_stmt(keyword.clone(), value))
     }
 
     fn expression(&self) -> ParseResult {
