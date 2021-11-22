@@ -55,8 +55,6 @@ impl Interpreter {
         statements: &[Stmt],
         environment: Environment,
     ) -> Result<(), RuntimeBreak> {
-        // let environment = self.environment.take();
-        // let environment = Environment::new(Some(Rc::new(RefCell::new(environment))));
         let replacement = RefCell::new(environment);
         self.environment.swap(&replacement);
 
@@ -173,6 +171,12 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
 
+    fn visit_return(&self, stmt: &Return) -> Self::R {
+        let value = self.evaluate(stmt.1.as_ref())?;
+
+        Err(RuntimeBreak::ret(value))
+    }
+
     fn visit_var(&self, stmt: &Var) -> Self::R {
         let initializer = stmt.1.as_ref();
         let value = self.evaluate(initializer)?;
@@ -184,10 +188,6 @@ impl StmtVisitor for Interpreter {
 
     fn visit_null(&self) -> Self::R {
         Ok(())
-    }
-
-    fn visit_return(&self, stmt: &Return) -> Self::R {
-        todo!()
     }
 }
 
@@ -283,7 +283,7 @@ impl ExprVisitor for Interpreter {
                 ));
             }
 
-            Ok(function.call(self, &arguments))
+            function.call(self, &arguments)
         } else {
             Err(RuntimeBreak::raise(
                 expr.1.as_ref().to_owned(),

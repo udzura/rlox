@@ -1,5 +1,6 @@
 use crate::callable::Callable;
 use crate::environment::Environment;
+use crate::errors::RuntimeBreak;
 use crate::interpreter::Interpreter;
 use crate::stmt::Fun;
 //use crate::stmt::Stmt;
@@ -102,9 +103,9 @@ impl Callable for Function {
         self.arity_nr
     }
 
-    fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Value {
+    fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Result<Value, RuntimeBreak> {
         if let Some(native) = self.native {
-            native(interpreter, arguments)
+            Ok(native(interpreter, arguments))
         } else if let Some(declaration) = &self.declaration {
             let mut environment = Environment::new(Some(interpreter.globals.clone()));
             for i in 0..(self.arity_nr as usize) {
@@ -114,13 +115,11 @@ impl Callable for Function {
                 )
             }
 
-            // let replacement = RefCell::new(environment);
-            // interpreter.environment.swap(&replacement);
-            interpreter
-                .execute_block(&declaration.2, environment)
-                .unwrap();
-            // interpreter.environment.swap(&replacement);
-            return Value::Nil;
+            match interpreter.execute_block(&declaration.2, environment) {
+                Ok(_) => Ok(Value::Nil),
+                Err(RuntimeBreak::Return { value }) => Ok(value),
+                Err(err) => Err(err),
+            }
         } else {
             panic!("[BUG] invalid function decleration")
         }

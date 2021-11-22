@@ -6,7 +6,6 @@ use crate::errors::*;
 use crate::expr::Expr;
 use crate::stmt::Stmt;
 use crate::token::*;
-use crate::value::Value;
 
 #[derive(Debug)]
 pub struct Parser {
