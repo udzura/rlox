@@ -150,7 +150,7 @@ impl StmtVisitor for Interpreter {
 
     fn visit_fun(&mut self, stmt: &Rc<Fun>) -> Self::R {
         let name = &stmt.0.as_ref().lexeme;
-        let function = Function::new_lox(stmt.clone());
+        let function = Function::new_lox(stmt.clone(), Some(self.environment.clone()));
         let value = Value::LoxFunction(function);
         self.environment.borrow_mut().define(name, value);
 

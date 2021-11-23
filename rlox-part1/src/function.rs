@@ -5,6 +5,7 @@ use crate::interpreter::Interpreter;
 use crate::stmt::Fun;
 use crate::value::Value;
 
+use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
@@ -14,6 +15,7 @@ pub struct Function {
     arity_nr: u8,
     native: Option<fn(&Interpreter, &[Value]) -> Value>,
     declaration: Option<Rc<Fun>>,
+    closure: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Function {
@@ -27,10 +29,11 @@ impl Function {
             arity_nr: arity_nr,
             native: Some(native),
             declaration: None,
+            closure: None,
         }
     }
 
-    pub fn new_lox(declaration: Rc<Fun>) -> Self {
+    pub fn new_lox(declaration: Rc<Fun>, closure: Option<Rc<RefCell<Environment>>>) -> Self {
         let name = declaration.0.as_ref().lexeme.clone();
         let arity_nr = declaration.1.len() as u8;
         let declaration = Some(declaration);
@@ -39,6 +42,7 @@ impl Function {
             arity_nr,
             native: None,
             declaration: declaration,
+            closure,
         }
     }
 }
@@ -67,7 +71,7 @@ impl Callable for Function {
         if let Some(native) = self.native {
             Ok(native(interpreter, arguments))
         } else if let Some(declaration) = &self.declaration {
-            let mut environment = Environment::new(Some(interpreter.globals.clone()));
+            let mut environment = Environment::new(self.closure.clone());
             for i in 0..(self.arity_nr as usize) {
                 environment.define(
                     &declaration.1.get(i as usize).unwrap().lexeme,
