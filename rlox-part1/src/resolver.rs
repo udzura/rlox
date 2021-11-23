@@ -14,6 +14,7 @@ pub struct Resolver<'a> {
     pub scopes: Vec<HashMap<String, bool>>,
 }
 
+#[allow(unused_variables)]
 impl<'a> Resolver<'a> {
     pub fn new(interpreter: &'a mut Interpreter) -> Self {
         let scopes = Vec::new();
@@ -49,7 +50,11 @@ impl<'a> Resolver<'a> {
 
     fn resolve_local(&mut self, name: &Token) -> Result<(), RuntimeBreak> {
         let len = self.scopes.len();
-        for i in (len - 1)..=0 {
+        if len == 0 {
+            return Ok(());
+        }
+
+        for i in (0..=(len - 1)).rev() {
             if self.scopes.get(i).unwrap().contains_key(&name.lexeme) {
                 self.interpreter.resolve(name.clone(), len - 1 - i)?;
                 return Ok(());
@@ -58,7 +63,7 @@ impl<'a> Resolver<'a> {
         Ok(())
     }
 
-    fn resolve(&mut self, statements: &[Stmt]) -> Result<(), RuntimeBreak> {
+    pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), RuntimeBreak> {
         for stmt in statements.iter() {
             self.resolve_stmt(stmt)?;
         }
@@ -85,6 +90,7 @@ impl<'a> Resolver<'a> {
     }
 }
 
+#[allow(unused_variables)]
 impl<'a> StmtVisitor for Resolver<'a> {
     type R = Result<(), RuntimeBreak>;
 
@@ -105,7 +111,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
 
     fn visit_fun(&mut self, stmt: &Rc<Fun>) -> Self::R {
         self.declare(stmt.0.as_ref());
-        self.declare(stmt.0.as_ref());
+        self.define(stmt.0.as_ref());
 
         self.resolve_function(stmt)
     }
@@ -152,6 +158,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 }
 
+#[allow(unused_variables)]
 impl<'a> ExprVisitor for Resolver<'a> {
     type R = Result<(), RuntimeBreak>;
 

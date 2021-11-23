@@ -71,6 +71,7 @@ pub fn run_prompt() -> Result<(), IoError> {
 
 use interpreter::Interpreter;
 use parser::Parser;
+use resolver::Resolver;
 use scanner::*;
 
 fn run(source: String) -> Result<(), Box<dyn Error>> {
@@ -86,7 +87,11 @@ fn run(source: String) -> Result<(), Box<dyn Error>> {
         //     );
         // }
 
-        Interpreter::new().interpret(&statements)?;
+        let mut interpreter = Interpreter::new();
+        let mut resolver = Resolver::new(&mut interpreter);
+        resolver.resolve(&statements)?;
+        //dbg!(&resolver);
+        interpreter.interpret(&statements)?;
     }
 
     Ok(())

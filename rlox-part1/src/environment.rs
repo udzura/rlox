@@ -62,4 +62,33 @@ impl Environment {
             None => None,
         }
     }
+
+    pub fn get_at(
+        environment: Rc<RefCell<Self>>,
+        distance: usize,
+        name: &Token,
+    ) -> Result<Value, RuntimeBreak> {
+        unsafe { &*Self::ancestor(environment, distance) }.get(name)
+    }
+
+    pub fn assign_at(
+        environment: Rc<RefCell<Self>>,
+        distance: usize,
+        name: &Token,
+        value: Value,
+    ) -> Result<(), RuntimeBreak> {
+        unsafe { &mut *Self::ancestor(environment, distance) }.assign(name, value)
+    }
+
+    fn ancestor(environment: Rc<RefCell<Self>>, distance: usize) -> *mut Environment {
+        let mut environment = environment.as_ptr();
+        for _ in 0..distance {
+            environment = unsafe { &*environment }
+                .enclosing
+                .as_ref()
+                .expect("Too much distance")
+                .as_ptr();
+        }
+        environment
+    }
 }

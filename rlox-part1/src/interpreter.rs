@@ -81,8 +81,17 @@ impl Interpreter {
     }
 
     pub fn resolve(&mut self, token: Token, depth: usize) -> Result<(), RuntimeBreak> {
+        // dbg!(&token, &depth);
         self.locals.insert(token, depth);
         Ok(())
+    }
+
+    fn lookup_variable(&mut self, name: &Token) -> Result<Value, RuntimeBreak> {
+        let distance = self.locals.get(name);
+        match distance {
+            Some(distance) => Environment::get_at(self.environment.clone(), *distance, name),
+            None => self.globals.borrow().get(name),
+        }
     }
 
     fn evaluate(&mut self, expr: &Expr) -> Result<Value, RuntimeBreak> {
@@ -131,6 +140,7 @@ impl Interpreter {
     }
 }
 
+#[allow(unused_variables)]
 impl StmtVisitor for Interpreter {
     type R = Result<(), RuntimeBreak>;
 
@@ -203,13 +213,24 @@ impl StmtVisitor for Interpreter {
     }
 }
 
+#[allow(unused_variables)]
 impl ExprVisitor for Interpreter {
     type R = Result<Value, RuntimeBreak>;
 
     fn visit_assign(&mut self, expr: &Assign) -> Self::R {
         let value = self.evaluate(expr.1.as_ref())?;
-        let mut envronmnt = self.environment.borrow_mut();
-        envronmnt.assign(expr.0.as_ref(), value.clone())?;
+        let name = expr.0.as_ref();
+        let distance = self.locals.get(name);
+
+        match distance {
+            Some(distance) => {
+                Environment::assign_at(self.environment.clone(), *distance, name, value.clone())?;
+            }
+            None => {
+                self.globals.borrow_mut().assign(name, value.clone())?;
+            }
+        }
+
         Ok(value)
     }
 
@@ -350,9 +371,7 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable(&mut self, expr: &Variable) -> Self::R {
-        let environment = self.environment.borrow();
-        let v = environment.get(expr.0.as_ref())?;
-        Ok(v.clone())
+        self.lookup_variable(expr.0.as_ref())
     }
 
     fn visit_null(&mut self) -> Self::R {
