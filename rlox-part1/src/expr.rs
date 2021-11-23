@@ -15,6 +15,8 @@ pub struct Binary(pub ExprP, pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Call(pub ExprP, pub TokenP, pub ExprV);
 #[derive(Debug, Clone)]
+pub struct Get(pub ExprP, pub TokenP);
+#[derive(Debug, Clone)]
 pub struct Grouping(pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Lit(pub LiteralP);
@@ -37,6 +39,7 @@ pub enum Expr {
     Assign_(Assign),
     Binary_(Binary),
     Call_(Call),
+    Get_(Get),
     Grouping_(Grouping),
     Literal_(Lit),
     Logical_(Logical),
@@ -61,6 +64,10 @@ impl Expr {
 
     pub fn call(callee: Self, paren: Token, arguments: Vec<Self>) -> Self {
         Self::Call_(Call(Box::new(callee), Box::new(paren), arguments))
+    }
+
+    pub fn get(object: Self, name: Token) -> Self {
+        Self::Get_(Get(Box::new(object), Box::new(name)))
     }
 
     pub fn grouping(expr: Self) -> Self {
@@ -110,6 +117,7 @@ impl Expr {
             Assign_(expr) => visitor.visit_assign(expr),
             Binary_(expr) => visitor.visit_binary(expr),
             Call_(expr) => visitor.visit_call(expr),
+            Get_(expr) => visitor.visit_get(expr),
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
             Logical_(expr) => visitor.visit_logical(expr),

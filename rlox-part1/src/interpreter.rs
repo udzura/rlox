@@ -389,4 +389,8 @@ impl ExprVisitor for Interpreter {
     fn visit_this(&mut self, expr: &This) -> Self::R {
         todo!()
     }
+
+    fn visit_get(&mut self, expr: &Get) -> Self::R {
+        todo!()
+    }
 }

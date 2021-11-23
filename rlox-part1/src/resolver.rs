@@ -267,4 +267,8 @@ impl<'a> ExprVisitor for Resolver<'a> {
     fn visit_null(&mut self) -> Self::R {
         Ok(())
     }
+
+    fn visit_get(&mut self, expr: &Get) -> Self::R {
+        todo!()
+    }
 }
