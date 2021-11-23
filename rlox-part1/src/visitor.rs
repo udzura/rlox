@@ -12,6 +12,9 @@ pub trait ExprVisitor {
     fn visit_grouping(&mut self, expr: &Grouping) -> Self::R;
     fn visit_literal(&mut self, expr: &Lit) -> Self::R;
     fn visit_logical(&mut self, expr: &Logical) -> Self::R;
+    fn visit_set(&mut self, expr: &Set) -> Self::R;
+    fn visit_super(&mut self, expr: &Super) -> Self::R;
+    fn visit_this(&mut self, expr: &This) -> Self::R;
     fn visit_unary(&mut self, expr: &Unary) -> Self::R;
     fn visit_variable(&mut self, expr: &Variable) -> Self::R;
 
@@ -22,6 +25,7 @@ pub trait StmtVisitor {
     type R;
 
     fn visit_block(&mut self, stmt: &Block) -> Self::R;
+    fn visit_class(&mut self, stmt: &Class) -> Self::R;
     fn visit_expression(&mut self, stmt: &Expression) -> Self::R;
     fn visit_fun(&mut self, stmt: &Rc<Fun>) -> Self::R;
     fn visit_if(&mut self, stmt: &If) -> Self::R;

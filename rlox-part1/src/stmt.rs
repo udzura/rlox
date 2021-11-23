@@ -10,6 +10,8 @@ type Statements = Vec<Stmt>;
 #[derive(Debug, Clone)]
 pub struct Block(pub Statements);
 #[derive(Debug, Clone)]
+pub struct Class(pub TokenP, pub Option<Box<Variable>>, pub Vec<Fun>);
+#[derive(Debug, Clone)]
 pub struct Expression(pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Fun(pub TokenP, pub Vec<Token>, pub Statements);
@@ -28,6 +30,7 @@ pub struct While(pub ExprP, pub StmtP);
 #[non_exhaustive]
 pub enum Stmt {
     Block_(Block),
+    Class_(Class),
     Expression_(Expression),
     Fun_(Rc<Fun>),
     If_(If),
@@ -43,6 +46,14 @@ pub enum Stmt {
 impl Stmt {
     pub fn block(statements: Vec<Self>) -> Self {
         Self::Block_(Block(statements))
+    }
+
+    pub fn class(name: Token, superclass: Option<Variable>, methods: Vec<Fun>) -> Self {
+        Self::Class_(Class(
+            Box::new(name),
+            superclass.map(|e| Box::new(e)),
+            methods,
+        ))
     }
 
     pub fn expression(expr: Expr) -> Self {
@@ -90,6 +101,7 @@ impl Stmt {
         use Stmt::*;
         match self {
             Block_(stmt) => visitor.visit_block(stmt),
+            Class_(stmt) => visitor.visit_class(stmt),
             Expression_(stmt) => visitor.visit_expression(stmt),
             Fun_(stmt) => visitor.visit_fun(stmt),
             If_(stmt) => visitor.visit_if(stmt),

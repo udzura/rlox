@@ -200,6 +200,10 @@ impl StmtVisitor for Interpreter {
     fn visit_null(&mut self) -> Self::R {
         Ok(())
     }
+
+    fn visit_class(&mut self, stmt: &Class) -> Self::R {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {
@@ -356,5 +360,17 @@ impl ExprVisitor for Interpreter {
 
     fn visit_null(&mut self) -> Self::R {
         Ok(Value::Nil)
+    }
+
+    fn visit_set(&mut self, expr: &Set) -> Self::R {
+        todo!()
+    }
+
+    fn visit_super(&mut self, expr: &Super) -> Self::R {
+        todo!()
+    }
+
+    fn visit_this(&mut self, expr: &This) -> Self::R {
+        todo!()
     }
 }

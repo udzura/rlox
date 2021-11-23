@@ -19,6 +19,12 @@ pub struct Lit(pub LiteralP);
 #[derive(Debug, Clone)]
 pub struct Logical(pub ExprP, pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
+pub struct Set(pub ExprP, pub TokenP, pub ExprP);
+#[derive(Debug, Clone)]
+pub struct Super(pub TokenP, pub TokenP);
+#[derive(Debug, Clone)]
+pub struct This(pub TokenP);
+#[derive(Debug, Clone)]
 pub struct Unary(pub TokenP, pub ExprP);
 #[derive(Debug, Clone)]
 pub struct Variable(pub TokenP);
@@ -32,6 +38,9 @@ pub enum Expr {
     Grouping_(Grouping),
     Literal_(Lit),
     Logical_(Logical),
+    Set_(Set),
+    Super_(Super),
+    This_(This),
     Unary_(Unary),
     Variable_(Variable),
 
@@ -64,6 +73,18 @@ impl Expr {
         Self::Logical_(Logical(Box::new(left), Box::new(operator), Box::new(right)))
     }
 
+    pub fn set(object: Self, name: Token, value: Self) -> Self {
+        Self::Set_(Set(Box::new(object), Box::new(name), Box::new(value)))
+    }
+
+    pub fn super_(keyword: Token, method: Token) -> Self {
+        Self::Super_(Super(Box::new(keyword), Box::new(method)))
+    }
+
+    pub fn this(keyword: Token) -> Self {
+        Self::This_(This(Box::new(keyword)))
+    }
+
     pub fn unary(operator: Token, right: Self) -> Self {
         Self::Unary_(Unary(Box::new(operator), Box::new(right)))
     }
@@ -90,6 +111,9 @@ impl Expr {
             Grouping_(expr) => visitor.visit_grouping(expr),
             Literal_(expr) => visitor.visit_literal(expr),
             Logical_(expr) => visitor.visit_logical(expr),
+            Set_(expr) => visitor.visit_set(expr),
+            Super_(expr) => visitor.visit_super(expr),
+            This_(expr) => visitor.visit_this(expr),
             Unary_(expr) => visitor.visit_unary(expr),
             Variable_(expr) => visitor.visit_variable(expr),
             Null => visitor.visit_null(),
