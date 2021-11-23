@@ -5,9 +5,9 @@ use crate::callable::Callable;
 use crate::environment::Environment;
 use crate::errors::RuntimeBreak;
 use crate::expr::*;
+use crate::function::Function;
 use crate::stmt::*;
 use crate::token::*;
-use crate::value::Function;
 use crate::value::Value;
 use crate::visitor::*;
 
