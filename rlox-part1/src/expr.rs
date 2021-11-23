@@ -78,7 +78,7 @@ impl Expr {
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: &T) -> <T as ExprVisitor>::R
+    pub fn accept<T>(&self, visitor: &mut T) -> <T as ExprVisitor>::R
     where
         T: ExprVisitor,
     {

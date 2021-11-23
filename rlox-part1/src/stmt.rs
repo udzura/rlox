@@ -83,7 +83,7 @@ impl Stmt {
 }
 
 impl Stmt {
-    pub fn accept<T>(&self, visitor: &T) -> <T as StmtVisitor>::R
+    pub fn accept<T>(&self, visitor: &mut T) -> <T as StmtVisitor>::R
     where
         T: StmtVisitor,
     {

@@ -4,5 +4,9 @@ use crate::value::Value;
 
 pub trait Callable {
     fn arity(&self) -> u8;
-    fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Result<Value, RuntimeBreak>;
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Value],
+    ) -> Result<Value, RuntimeBreak>;
 }

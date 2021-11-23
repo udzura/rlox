@@ -103,7 +103,11 @@ impl Callable for Function {
         self.arity_nr
     }
 
-    fn call(&self, interpreter: &Interpreter, arguments: &[Value]) -> Result<Value, RuntimeBreak> {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Value],
+    ) -> Result<Value, RuntimeBreak> {
         if let Some(native) = self.native {
             Ok(native(interpreter, arguments))
         } else if let Some(declaration) = &self.declaration {
@@ -115,11 +119,12 @@ impl Callable for Function {
                 )
             }
 
-            match interpreter.execute_block(&declaration.2, environment) {
+            let ret = match interpreter.execute_block(&declaration.2, environment) {
                 Ok(_) => Ok(Value::Nil),
                 Err(RuntimeBreak::Return { value }) => Ok(value),
                 Err(err) => Err(err),
-            }
+            };
+            ret
         } else {
             panic!("[BUG] invalid function decleration")
         }
