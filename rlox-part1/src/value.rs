@@ -1,8 +1,10 @@
 use crate::class::Class;
 use crate::function::Function;
+use crate::instance::Instance;
 use crate::token::Literal;
 
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
@@ -13,7 +15,8 @@ pub enum Value {
     Number(f64),
     LoxString(String),
     LoxFunction(Function),
-    LoxClass(Class),
+    LoxClass(Rc<Class>),
+    LoxInstance(Instance),
 }
 
 impl From<&Literal> for Value {
@@ -46,6 +49,7 @@ impl fmt::Display for Value {
             LoxString(s) => write!(f, "{}", s),
             LoxFunction(fun) => write!(f, "#<Function: {}>", &fun.name),
             LoxClass(class) => write!(f, "#<Class: {}>", &class.name),
+            LoxInstance(instance) => write!(f, "#<Instance of {}>", &instance.get_class().name),
         }
     }
 }
