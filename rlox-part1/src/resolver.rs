@@ -32,11 +32,18 @@ impl<'a> Resolver<'a> {
         self.scopes.pop();
     }
 
-    fn declare(&mut self, name: &Token) {
+    fn declare(&mut self, name: &Token) -> Result<(), RuntimeBreak> {
         if let Some(scope) = self.scopes.last_mut() {
+            if scope.contains_key(&name.lexeme) {
+                return Err(RuntimeBreak::raise(
+                    name.clone(),
+                    "Already a variable with this name in this scope.",
+                ));
+            }
             scope.insert(name.lexeme.clone(), false);
+            Ok(())
         } else {
-            return;
+            Ok(())
         }
     }
 
@@ -73,7 +80,7 @@ impl<'a> Resolver<'a> {
     fn resolve_function(&mut self, function: &Rc<Fun>) -> Result<(), RuntimeBreak> {
         self.begin_scope();
         for param in function.1.iter() {
-            self.declare(param);
+            self.declare(param)?;
             self.define(param);
         }
         self.resolve(&function.2)?;
@@ -110,7 +117,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_fun(&mut self, stmt: &Rc<Fun>) -> Self::R {
-        self.declare(stmt.0.as_ref());
+        self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
 
         self.resolve_function(stmt)
@@ -135,7 +142,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
 
     fn visit_var(&mut self, stmt: &Var) -> Self::R {
         let name = stmt.0.as_ref();
-        self.declare(name);
+        self.declare(name)?;
         match stmt.1.as_ref() {
             Expr::Null => {}
             initializer => {
