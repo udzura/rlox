@@ -8,10 +8,17 @@ use crate::visitor::*;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum FunctionType {
+    None = 0,
+    Function = 1,
+}
+
 #[derive(Debug)]
 pub struct Resolver<'a> {
     pub interpreter: &'a mut Interpreter,
     pub scopes: Vec<HashMap<String, bool>>,
+    current_function: FunctionType,
 }
 
 #[allow(unused_variables)]
@@ -21,6 +28,7 @@ impl<'a> Resolver<'a> {
         Self {
             interpreter,
             scopes,
+            current_function: FunctionType::None,
         }
     }
 
@@ -77,7 +85,14 @@ impl<'a> Resolver<'a> {
         Ok(())
     }
 
-    fn resolve_function(&mut self, function: &Rc<Fun>) -> Result<(), RuntimeBreak> {
+    fn resolve_function(
+        &mut self,
+        function: &Rc<Fun>,
+        funtype: FunctionType,
+    ) -> Result<(), RuntimeBreak> {
+        let enclosing_function = self.current_function;
+        self.current_function = funtype;
+
         self.begin_scope();
         for param in function.1.iter() {
             self.declare(param)?;
@@ -85,6 +100,8 @@ impl<'a> Resolver<'a> {
         }
         self.resolve(&function.2)?;
         self.end_scope();
+        self.current_function = enclosing_function;
+
         Ok(())
     }
 
@@ -120,7 +137,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
         self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
 
-        self.resolve_function(stmt)
+        self.resolve_function(stmt, FunctionType::Function)
     }
 
     fn visit_if(&mut self, stmt: &If) -> Self::R {
@@ -137,6 +154,13 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_return(&mut self, stmt: &Return) -> Self::R {
+        if self.current_function == FunctionType::None {
+            return Err(RuntimeBreak::raise(
+                stmt.0.as_ref().clone(),
+                "Can't return from top-level code.",
+            ));
+        }
+
         self.resolve_expr(stmt.1.as_ref())
     }
 
