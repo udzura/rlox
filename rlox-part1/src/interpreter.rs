@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::callable::Callable;
+use crate::class::Class as Klass;
 use crate::environment::Environment;
 use crate::errors::RuntimeBreak;
 use crate::expr::*;
@@ -150,6 +151,19 @@ impl StmtVisitor for Interpreter {
         self.execute_block(&stmt.0, environment)
     }
 
+    fn visit_class(&mut self, stmt: &Class) -> Self::R {
+        self.environment
+            .borrow_mut()
+            .define(&stmt.0.as_ref().lexeme, Value::Nil);
+
+        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme));
+        self.environment
+            .borrow_mut()
+            .assign(&stmt.0.as_ref(), class)?;
+
+        Ok(())
+    }
+
     fn visit_expression(&mut self, stmt: &crate::stmt::Expression) -> Self::R {
         self.evaluate(stmt.0.as_ref())?;
         Ok(())
@@ -206,10 +220,6 @@ impl StmtVisitor for Interpreter {
 
     fn visit_null(&mut self) -> Self::R {
         Ok(())
-    }
-
-    fn visit_class(&mut self, stmt: &Class) -> Self::R {
-        todo!()
     }
 }
 

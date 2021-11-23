@@ -10,6 +10,7 @@ use std::process::exit;
 
 pub mod ast_printer;
 pub mod callable;
+pub mod class;
 pub mod environment;
 pub mod errors;
 pub mod expr;

@@ -1,3 +1,4 @@
+use crate::class::Class;
 use crate::function::Function;
 use crate::token::Literal;
 
@@ -12,6 +13,7 @@ pub enum Value {
     Number(f64),
     LoxString(String),
     LoxFunction(Function),
+    LoxClass(Class),
 }
 
 impl From<&Literal> for Value {
@@ -43,6 +45,7 @@ impl fmt::Display for Value {
             Number(n) => write!(f, "{}", n),
             LoxString(s) => write!(f, "{}", s),
             LoxFunction(fun) => write!(f, "#<Function: {}>", &fun.name),
+            LoxClass(class) => write!(f, "#<Class: {}>", &class.name),
         }
     }
 }

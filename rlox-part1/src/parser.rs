@@ -32,7 +32,9 @@ impl Parser {
     }
 
     fn declaration(&self) -> StmtResult {
-        match if self.matching(&[TokenType::FUN]) {
+        match if self.matching(&[TokenType::CLASS]) {
+            self.class_declaration()
+        } else if self.matching(&[TokenType::FUN]) {
             self.function("function")
         } else if self.matching(&[TokenType::VAR]) {
             self.var_declaration()
@@ -82,6 +84,19 @@ impl Parser {
         let body: Vec<Stmt> = self.block()?;
 
         return Ok(Stmt::fun(name, parameters, body));
+    }
+
+    fn class_declaration(&self) -> StmtResult {
+        let name = self.consume(TokenType::IDENTIFIER, "Expect class name.")?;
+        self.consume(TokenType::LEFT_BRACE, "Expect '{' before class body.")?;
+
+        let mut methods = vec![];
+        while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            methods.push(self.function("method")?);
+        }
+        self.consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.")?;
+
+        Ok(Stmt::class(name.clone(), None, methods))
     }
 
     fn var_declaration(&self) -> StmtResult {

@@ -126,6 +126,8 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_class(&mut self, stmt: &Class) -> Self::R {
+        self.declare(stmt.0.as_ref())?;
+        self.define(stmt.0.as_ref());
         Ok(())
     }
 
