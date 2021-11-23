@@ -1,3 +1,5 @@
+use std::hash::{Hash, Hasher};
+
 use super::token::{Literal, Token};
 use super::visitor::ExprVisitor;
 
@@ -121,3 +123,26 @@ impl Expr {
         }
     }
 }
+
+impl Hash for Expr {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        use Expr::*;
+        match self {
+            Assign_(expr) => expr.0.hash(state),
+            Variable_(expr) => expr.0.hash(state),
+            _ => format!("{:?}", self).hash(state),
+        }
+    }
+}
+
+impl PartialEq for Expr {
+    fn eq(&self, other: &Self) -> bool {
+        use Expr::*;
+        match (self, other) {
+            (Assign_(expr), Assign_(oth)) => expr.0 == oth.0,
+            (Variable_(expr), Variable_(oth)) => expr.0 == oth.0,
+            _ => false,
+        }
+    }
+}
+impl Eq for Expr {}

@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::callable::Callable;
@@ -15,6 +16,7 @@ use crate::visitor::*;
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
     pub environment: Rc<RefCell<Environment>>,
+    pub locals: HashMap<Token, usize>,
 }
 
 impl Interpreter {
@@ -36,9 +38,12 @@ impl Interpreter {
             .borrow_mut()
             .define("clock", Value::LoxFunction(function));
 
+        let locals = HashMap::new();
+
         Self {
             globals,
             environment,
+            locals,
         }
     }
 
@@ -68,24 +73,16 @@ impl Interpreter {
         };
 
         std::mem::swap(&mut self.environment, &mut replacement);
-
-        // let environment = self.environment.take();
-        // // if let Some(enclosing) = environment.take_enclosing() {
-        // //     let original = RefCell::new(enclosing);
-        // //     self.environment.swap(&original);
-        // // } else {
-        // //dbg!("before replace back");
-        // //dbg!(&replacement);
-        // self.environment.swap(&replacement);
-        // //dbg!("after replace back");
-        // //dbg!(&replacement);
-        // //panic!("BUG: missing enclosure");
-        // // }
         res
     }
 
     fn execute(&mut self, stmt: &Stmt) -> Result<(), RuntimeBreak> {
         stmt.accept(self)
+    }
+
+    pub fn resolve(&mut self, token: Token, depth: usize) -> Result<(), RuntimeBreak> {
+        self.locals.insert(token, depth);
+        Ok(())
     }
 
     fn evaluate(&mut self, expr: &Expr) -> Result<Value, RuntimeBreak> {

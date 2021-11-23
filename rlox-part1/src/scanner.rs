@@ -7,6 +7,7 @@ pub struct Scanner<'source> {
     start: i64,
     current: i64,
     line: i64,
+    current_index: usize,
 }
 
 impl<'source> Scanner<'source> {
@@ -18,6 +19,7 @@ impl<'source> Scanner<'source> {
             start: 0,
             current: 0,
             line: 1,
+            current_index: 0,
         }
     }
 
@@ -27,7 +29,9 @@ impl<'source> Scanner<'source> {
             self.scan_token()?;
         }
 
+        self.current_index += 1;
         self.tokens.push(Token::new(
+            self.current_index,
             TokenType::EOF,
             "".to_string(),
             Literal::Nil,
@@ -240,7 +244,13 @@ impl<'source> Scanner<'source> {
             None => Literal::Nil,
             Some(l) => l,
         };
-        self.tokens
-            .push(Token::new(token_type, text.to_owned(), literal, self.line))
+        self.current_index += 1;
+        self.tokens.push(Token::new(
+            self.current_index,
+            token_type,
+            text.to_owned(),
+            literal,
+            self.line,
+        ))
     }
 }
