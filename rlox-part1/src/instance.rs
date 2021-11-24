@@ -1,5 +1,9 @@
+extern crate rand;
+
 use std::collections::HashMap;
 use std::rc::Rc;
+
+use rand::random;
 
 use crate::class::*;
 use crate::errors::RuntimeBreak;
@@ -15,7 +19,7 @@ pub struct Instance {
 impl Instance {
     pub fn new(class: Rc<ClassCore>) -> Self {
         let data = InstanceData::default();
-        let id = class.pool.borrow().len() as u64;
+        let id: u64 = random();
         class.pool.borrow_mut().insert(id, data);
 
         Self { id, class }
