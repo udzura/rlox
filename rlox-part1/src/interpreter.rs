@@ -356,6 +356,21 @@ impl ExprVisitor for Interpreter {
         ));
     }
 
+    fn visit_set(&mut self, expr: &Set) -> Self::R {
+        let object = self.evaluate(expr.0.as_ref())?;
+
+        if let Value::LoxInstance(object) = object {
+            let value = self.evaluate(expr.2.as_ref())?;
+            object.set(expr.1.as_ref(), value)?;
+            return Ok(Value::Nil);
+        }
+
+        return Err(RuntimeBreak::raise(
+            expr.1.as_ref().clone(),
+            "Only instances have fields.",
+        ));
+    }
+
     fn visit_grouping(&mut self, expr: &Grouping) -> Self::R {
         self.evaluate(expr.0.as_ref())
     }
@@ -407,10 +422,6 @@ impl ExprVisitor for Interpreter {
 
     fn visit_null(&mut self) -> Self::R {
         Ok(Value::Nil)
-    }
-
-    fn visit_set(&mut self, expr: &Set) -> Self::R {
-        todo!()
     }
 
     fn visit_super(&mut self, expr: &Super) -> Self::R {

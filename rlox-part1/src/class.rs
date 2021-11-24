@@ -1,12 +1,14 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::callable::Callable;
 use crate::errors::RuntimeBreak;
-use crate::instance::Instance;
+use crate::instance::*;
 use crate::interpreter::Interpreter;
 use crate::value::Value;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Class {
     core: Rc<ClassCore>,
 }
@@ -14,7 +16,10 @@ pub struct Class {
 impl Class {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            core: Rc::new(ClassCore { name: name.into() }),
+            core: Rc::new(ClassCore {
+                name: name.into(),
+                ..Default::default()
+            }),
         }
     }
 
@@ -30,14 +35,15 @@ impl Callable for Class {
 
     fn call(
         &self,
-        interpreter: &mut Interpreter,
-        arguments: &[Value],
+        _interpreter: &mut Interpreter,
+        _arguments: &[Value],
     ) -> Result<Value, RuntimeBreak> {
         Ok(Value::LoxInstance(Instance::new(self.core.clone())))
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ClassCore {
     pub name: String,
+    pub pool: RefCell<HashMap<u64, InstanceData>>,
 }

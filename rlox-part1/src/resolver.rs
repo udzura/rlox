@@ -234,6 +234,8 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_set(&mut self, expr: &Set) -> Self::R {
+        self.resolve_expr(expr.2.as_ref())?;
+        self.resolve_expr(expr.0.as_ref())?;
         Ok(())
     }
 
