@@ -36,12 +36,18 @@ impl Instance {
             .get(&self.id)
             .ok_or_else(|| RuntimeBreak::raise(name.clone(), "Uninitialized instance"))?;
 
-        data.fields.get(&name.lexeme).cloned().ok_or_else(|| {
-            RuntimeBreak::raise(
-                name.clone(),
-                format!("Undefined property '{}'", &name.lexeme),
-            )
-        })
+        if data.fields.contains_key(&name.lexeme) {
+            return Ok(data.fields.get(&name.lexeme).unwrap().clone());
+        }
+
+        if let Some(method) = class.find_method(&name.lexeme) {
+            return Ok(method.clone());
+        }
+
+        Err(RuntimeBreak::raise(
+            name.clone(),
+            format!("Undefined property '{}'", &name.lexeme),
+        ))
     }
 
     pub fn set(&self, name: &Token, value: Value) -> Result<(), RuntimeBreak> {

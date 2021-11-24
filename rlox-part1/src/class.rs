@@ -14,10 +14,11 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: impl Into<String>) -> Self {
+    pub fn new(name: impl Into<String>, methods: HashMap<String, Value>) -> Self {
         Self {
             core: Rc::new(ClassCore {
                 name: name.into(),
+                methods,
                 ..Default::default()
             }),
         }
@@ -45,5 +46,12 @@ impl Callable for Class {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ClassCore {
     pub name: String,
+    pub methods: HashMap<String, Value>,
     pub pool: RefCell<HashMap<u64, InstanceData>>,
+}
+
+impl ClassCore {
+    pub fn find_method(&self, key: &String) -> Option<&Value> {
+        self.methods.get(key)
+    }
 }

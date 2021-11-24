@@ -156,7 +156,25 @@ impl StmtVisitor for Interpreter {
             .borrow_mut()
             .define(&stmt.0.as_ref().lexeme, Value::Nil);
 
-        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme));
+        let mut methods = HashMap::new();
+        for method in stmt.2.iter() {
+            match method {
+                Stmt::Fun_(fun) => {
+                    let name = fun.0.as_ref();
+                    let function = Function::new_lox(fun.clone(), Some(self.environment.clone()));
+                    let value = Value::LoxFunction(function);
+                    methods.insert(name.lexeme.clone(), value);
+                }
+                _ => {
+                    return Err(RuntimeBreak::raise(
+                        stmt.0.as_ref().clone(),
+                        "[BUG] Included a stmt that is ot a function.",
+                    ));
+                }
+            }
+        }
+
+        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme, methods));
         self.environment
             .borrow_mut()
             .assign(&stmt.0.as_ref(), class)?;

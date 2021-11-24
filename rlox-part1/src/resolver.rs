@@ -12,6 +12,7 @@ use std::rc::Rc;
 pub enum FunctionType {
     None = 0,
     Function = 1,
+    Method = 2,
 }
 
 #[derive(Debug)]
@@ -128,6 +129,18 @@ impl<'a> StmtVisitor for Resolver<'a> {
     fn visit_class(&mut self, stmt: &Class) -> Self::R {
         self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
+
+        for method in stmt.2.iter() {
+            match method {
+                Stmt::Fun_(fun) => self.resolve_function(fun, FunctionType::Method)?,
+                _ => {
+                    return Err(RuntimeBreak::raise(
+                        stmt.0.as_ref().clone(),
+                        "[BUG] Included a stmt that is ot a function.",
+                    ));
+                }
+            }
+        }
         Ok(())
     }
 
