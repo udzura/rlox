@@ -354,6 +354,10 @@ impl Parser {
         loop {
             if self.matching(&[TokenType::LEFT_PAREN]) {
                 expr = self.finish_call(expr)?;
+            } else if self.matching(&[TokenType::DOT]) {
+                let name =
+                    self.consume(TokenType::IDENTIFIER, "Expect property name after '.'.")?;
+                expr = Expr::get(expr, name.clone());
             } else {
                 break;
             }

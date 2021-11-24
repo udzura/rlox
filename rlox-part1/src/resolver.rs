@@ -215,6 +215,10 @@ impl<'a> ExprVisitor for Resolver<'a> {
         Ok(())
     }
 
+    fn visit_get(&mut self, expr: &Get) -> Self::R {
+        self.resolve_expr(expr.0.as_ref())
+    }
+
     fn visit_grouping(&mut self, expr: &Grouping) -> Self::R {
         self.resolve_expr(expr.0.as_ref())
     }
@@ -268,9 +272,5 @@ impl<'a> ExprVisitor for Resolver<'a> {
 
     fn visit_null(&mut self) -> Self::R {
         Ok(())
-    }
-
-    fn visit_get(&mut self, expr: &Get) -> Self::R {
-        todo!()
     }
 }
