@@ -254,6 +254,10 @@ impl Parser {
             if let Expr::Variable_(expr) = expr {
                 let name = expr.0.as_ref();
                 return Ok(Expr::assign(name.clone(), value));
+            } else if let Expr::Get_(get) = expr {
+                let name = get.1.as_ref().clone();
+                let obj = Box::into_inner(get.0);
+                return Ok(Expr::set(obj, name, value));
             }
 
             ScanError::report(equals, "Invalid assignment target.");
