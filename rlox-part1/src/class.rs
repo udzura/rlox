@@ -8,23 +8,36 @@ use crate::value::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Class {
-    pub name: String,
+    core: Rc<ClassCore>,
 }
 
 impl Class {
     pub fn new(name: impl Into<String>) -> Self {
-        Self { name: name.into() }
+        Self {
+            core: Rc::new(ClassCore { name: name.into() }),
+        }
     }
 
-    pub fn arity(&self) -> u8 {
+    pub fn name(&self) -> &str {
+        &self.core.name
+    }
+}
+
+impl Callable for Class {
+    fn arity(&self) -> u8 {
         0
     }
 
-    pub fn call(
-        self: Rc<Self>,
+    fn call(
+        &self,
         interpreter: &mut Interpreter,
         arguments: &[Value],
     ) -> Result<Value, RuntimeBreak> {
-        Ok(Value::LoxInstance(Instance::new(self.clone())))
+        Ok(Value::LoxInstance(Instance::new(self.core.clone())))
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClassCore {
+    pub name: String,
 }

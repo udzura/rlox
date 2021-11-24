@@ -1,18 +1,18 @@
 use std::rc::Rc;
 
-use crate::class::Class;
+use crate::class::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Instance {
-    pub class: Rc<Class>,
+    pub class: Rc<ClassCore>,
 }
 
 impl Instance {
-    pub fn new(class: Rc<Class>) -> Self {
+    pub fn new(class: Rc<ClassCore>) -> Self {
         Self { class }
     }
 
-    pub fn get_class(&self) -> Rc<Class> {
+    pub fn get_class(&self) -> Rc<ClassCore> {
         self.class.clone()
     }
 }

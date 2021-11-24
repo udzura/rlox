@@ -156,7 +156,7 @@ impl StmtVisitor for Interpreter {
             .borrow_mut()
             .define(&stmt.0.as_ref().lexeme, Value::Nil);
 
-        let class = Value::LoxClass(Rc::new(Klass::new(&stmt.0.lexeme)));
+        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme));
         self.environment
             .borrow_mut()
             .assign(&stmt.0.as_ref(), class)?;
@@ -314,35 +314,29 @@ impl ExprVisitor for Interpreter {
             arguments.push(self.evaluate(v)?);
         }
 
+        fn invoke_callable(
+            this: &mut Interpreter,
+            value: impl Callable,
+            arguments: &[Value],
+            expr: &Call,
+        ) -> Result<Value, RuntimeBreak> {
+            if arguments.len() != value.arity() as usize {
+                return Err(RuntimeBreak::raise(
+                    expr.1.as_ref().to_owned(),
+                    &format!(
+                        "Expected {arity} arguments but got {len}.",
+                        arity = value.arity(),
+                        len = arguments.len()
+                    ),
+                ));
+            }
+
+            value.call(this, arguments)
+        }
+
         match callee {
-            Value::LoxFunction(function) => {
-                if arguments.len() != function.arity() as usize {
-                    return Err(RuntimeBreak::raise(
-                        expr.1.as_ref().to_owned(),
-                        &format!(
-                            "Expected {arity} arguments but got {len}.",
-                            arity = function.arity(),
-                            len = arguments.len()
-                        ),
-                    ));
-                }
-
-                function.call(self, &arguments)
-            }
-            Value::LoxClass(class) => {
-                if arguments.len() != class.arity() as usize {
-                    return Err(RuntimeBreak::raise(
-                        expr.1.as_ref().to_owned(),
-                        &format!(
-                            "Expected {arity} arguments but got {len}.",
-                            arity = class.arity(),
-                            len = arguments.len()
-                        ),
-                    ));
-                }
-
-                class.call(self, &arguments)
-            }
+            Value::LoxFunction(function) => invoke_callable(self, function, &arguments, expr),
+            Value::LoxClass(class) => invoke_callable(self, class, &arguments, expr),
             _ => Err(RuntimeBreak::raise(
                 expr.1.as_ref().to_owned(),
                 "Can only call functions and classes.",
