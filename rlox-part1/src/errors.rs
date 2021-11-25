@@ -1,48 +1,27 @@
 use crate::value::Value;
 
-use super::token::{Token, TokenType};
+use super::token::Token;
 use std::error::Error;
 use std::fmt;
 
 #[derive(Debug)]
-pub struct ScanError {
-    line: i64,
-    occurred: String,
-    message: String,
-}
+pub struct ScanError {}
 
 impl ScanError {
-    pub fn raise(line: i64, occurred: impl Into<String>, message: impl Into<String>) -> Self {
-        Self {
-            line,
-            occurred: occurred.into(),
-            message: message.into(),
-        }
-    }
-
-    pub fn report(token: &Token, message: impl Into<String>) {
-        let err = if token.token_type == TokenType::EOF {
-            Self::raise(token.line, " at end", message)
-        } else {
-            Self::raise(token.line, format!(" at '{}'", token.lexeme), message)
-        };
-        println!("{}", &err);
+    pub fn raise() -> Self {
+        Self {}
     }
 }
 
 impl fmt::Display for ScanError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "[line: {}] Error{}: {}",
-            self.line, self.occurred, self.message
-        )
+        write!(f, "ScanError.",)
     }
 }
 
 impl Error for ScanError {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParseError {}
 
 impl ParseError {
@@ -58,6 +37,23 @@ impl fmt::Display for ParseError {
 }
 
 impl Error for ParseError {}
+
+#[derive(Debug, Clone)]
+pub struct SemanticError {}
+
+impl SemanticError {
+    pub fn raise() -> Self {
+        Self {}
+    }
+}
+
+impl fmt::Display for SemanticError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "SemanticError.")
+    }
+}
+
+impl Error for SemanticError {}
 
 #[derive(Debug)]
 pub enum RuntimeBreak {

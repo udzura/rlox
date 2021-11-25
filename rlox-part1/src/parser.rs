@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::context::Context;
 use crate::errors::*;
 
 use crate::expr::Expr;
@@ -11,27 +12,33 @@ use crate::token::*;
 pub struct Parser {
     pub tokens: Vec<Token>,
     pub current: Rc<RefCell<usize>>,
+
+    context: Rc<RefCell<Context>>,
 }
 
 type ParseResult = Result<Expr, ParseError>;
 type StmtResult = Result<Stmt, ParseError>;
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token>, context: Rc<RefCell<Context>>) -> Self {
         let current = Rc::new(RefCell::new(0));
-        Self { tokens, current }
+        Self {
+            tokens,
+            current,
+            context,
+        }
     }
 
-    pub fn parse(&self) -> Result<Vec<Stmt>, ParseError> {
+    pub fn parse(&self) -> Vec<Stmt> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
-            statements.push(self.declaration()?);
+            statements.push(self.declaration());
         }
 
-        Ok(statements)
+        statements
     }
 
-    fn declaration(&self) -> StmtResult {
+    fn declaration(&self) -> Stmt {
         match if self.matching(&[TokenType::CLASS]) {
             self.class_declaration()
         } else if self.matching(&[TokenType::FUN]) {
@@ -41,10 +48,10 @@ impl Parser {
         } else {
             self.statement()
         } {
-            Ok(s) => Ok(s),
+            Ok(s) => s,
             Err(_) => {
                 self.synchronize();
-                Ok(Stmt::null())
+                Stmt::null()
             }
         }
     }
@@ -62,8 +69,7 @@ impl Parser {
         if !self.check(TokenType::RIGHT_PAREN) {
             loop {
                 if parameters.len() >= 255 {
-                    ScanError::report(self.peek(), "Can't have more than 255 arguments.");
-                    return Err(ParseError::raise());
+                    return Err(self.error(self.peek(), "Can't have more than 255 arguments."));
                 }
 
                 parameters.push(
@@ -148,7 +154,7 @@ impl Parser {
         let mut statements: Vec<Stmt> = Vec::new();
 
         while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
-            statements.push(self.declaration()?);
+            statements.push(self.declaration());
         }
 
         self.consume(TokenType::RIGHT_BRACE, "Expect '}' after block.")?;
@@ -267,8 +273,7 @@ impl Parser {
                 return Ok(Expr::set(obj, name, value));
             }
 
-            ScanError::report(equals, "Invalid assignment target.");
-            return Err(ParseError::raise());
+            return Err(self.error(equals, "Invalid assignment target."));
         }
 
         return Ok(expr);
@@ -382,8 +387,7 @@ impl Parser {
         if !self.check(TokenType::RIGHT_PAREN) {
             loop {
                 if arguments.len() >= 255 {
-                    ScanError::report(self.peek(), "Can't have more than 255 arguments.");
-                    return Err(ParseError::raise());
+                    return Err(self.error(self.peek(), "Can't have more than 255 arguments."));
                 }
                 arguments.push(self.expression()?);
                 if !self.matching(&[TokenType::COMMA]) {
@@ -433,7 +437,7 @@ impl Parser {
             return Ok(Expr::variable(self.previous().clone()));
         }
 
-        Err(self.report_error(self.peek(), "Expect expression."))
+        Err(self.error(self.peek(), "Expect expression."))
     }
 
     // fn a_parser(&self) -> ParseResult {
@@ -472,7 +476,7 @@ impl Parser {
             Ok(self.advance())
         } else {
             let token = self.peek();
-            Err(self.report_error(token, message))
+            Err(self.error(token, message))
         }
     }
 
@@ -496,8 +500,8 @@ impl Parser {
         }
     }
 
-    fn report_error(&self, token: &Token, message: impl Into<String>) -> ParseError {
-        ScanError::report(token, message);
+    fn error(&self, token: &Token, message: impl Into<String>) -> ParseError {
+        self.context.borrow_mut().error_on(token, message);
         ParseError::raise()
     }
 

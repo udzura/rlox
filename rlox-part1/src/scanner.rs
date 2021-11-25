@@ -1,5 +1,10 @@
-use super::errors::ScanError;
-use super::token::*;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use crate::context::Context;
+
+use crate::errors::ScanError;
+use crate::token::*;
 
 pub struct Scanner<'source> {
     pub source: &'source str,
@@ -8,10 +13,12 @@ pub struct Scanner<'source> {
     current: i64,
     line: i64,
     current_index: usize,
+
+    context: Rc<RefCell<Context>>,
 }
 
 impl<'source> Scanner<'source> {
-    pub fn new(source: &'source str) -> Self {
+    pub fn new(source: &'source str, context: Rc<RefCell<Context>>) -> Self {
         let tokens = Vec::new();
         Self {
             source,
@@ -20,6 +27,7 @@ impl<'source> Scanner<'source> {
             current: 0,
             line: 1,
             current_index: 0,
+            context,
         }
     }
 
@@ -119,7 +127,9 @@ impl<'source> Scanner<'source> {
                 } else if Self::is_alpha(c) {
                     self.identifier()?;
                 } else {
-                    return Err(ScanError::raise(self.line, "", "Unexpected character."));
+                    self.context
+                        .borrow_mut()
+                        .error(self.line, "Unexpected character.");
                 }
             }
         };
@@ -170,7 +180,10 @@ impl<'source> Scanner<'source> {
         }
 
         if self.is_at_end() {
-            return Err(ScanError::raise(self.line, "", "Unterminated string."));
+            self.context
+                .borrow_mut()
+                .error(self.line, "Unterminated string.");
+            return Err(ScanError::raise());
         }
 
         // The closing ".
@@ -200,7 +213,7 @@ impl<'source> Scanner<'source> {
         let end = self.current as usize;
         let literal: f64 = (&self.source[start..end])
             .parse()
-            .map_err(|_| ScanError::raise(self.line, "", "[BUG] invalid numeric format"))?;
+            .map_err(|_| unreachable!("[BUG] invalid numeric format"))?;
 
         self.add_token(TokenType::NUMBER, Some(Literal::Num(literal)));
         Ok(())

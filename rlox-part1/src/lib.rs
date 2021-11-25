@@ -1,5 +1,6 @@
 #![feature(box_into_inner)]
 
+use std::cell::RefCell;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufRead;
@@ -9,6 +10,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::process::exit;
+use std::rc::Rc;
 
 pub mod ast_printer;
 pub mod callable;
@@ -39,11 +41,15 @@ pub fn run_file(path: &Path) -> Result<(), Box<dyn Error>> {
         Ok(_) => Ok(()),
         Err(e) => {
             if let Some(e) = e.downcast_ref::<ParseError>() {
-                eprintln!("{:?}", e);
+                eprintln!("{}", e);
                 exit(65);
             }
+            if let Some(e) = e.downcast_ref::<SemanticError>() {
+                eprintln!("{}", e);
+                exit(66);
+            }
             if let Some(e) = e.downcast_ref::<RuntimeBreak>() {
-                eprintln!("{:?}", e);
+                eprintln!("{}", e);
                 exit(70);
             }
             Ok(())
@@ -74,30 +80,38 @@ pub fn run_prompt() -> Result<(), IoError> {
     Ok(())
 }
 
+use context::Context;
 use interpreter::Interpreter;
 use parser::Parser;
 use resolver::Resolver;
 use scanner::*;
 
 fn run(source: String) -> Result<(), Box<dyn Error>> {
-    let mut scanner = Scanner::new(&source);
+    let context = Rc::new(RefCell::new(Context::default()));
+    let mut scanner = Scanner::new(&source, context.clone());
     scanner.scan_tokens()?;
 
-    let parser = Parser::new(scanner.tokens);
-    if let Ok(statements) = parser.parse() {
-        // if let Some(_) = std::env::var_os("LOX_DEBUG") {
-        //     println!(
-        //         "[DEBUG] AST: {}",
-        //         ast_printer::AstPrinter {}.print(&expression)
-        //     );
-        // }
-
-        let mut interpreter = Interpreter::new();
-        let mut resolver = Resolver::new(&mut interpreter);
-        resolver.resolve(&statements)?;
-        //dbg!(&resolver);
-        interpreter.interpret(&statements)?;
+    let parser = Parser::new(scanner.tokens, context.clone());
+    let statements = parser.parse();
+    if context.borrow().had_error {
+        return Err(Box::new(errors::ParseError::raise()));
     }
+
+    // if let Some(_) = std::env::var_os("LOX_DEBUG") {
+    //     println!(
+    //         "[DEBUG] AST: {}",
+    //         ast_printer::AstPrinter {}.print(&expression)
+    //     );
+    // }
+
+    let mut interpreter = Interpreter::new();
+    let mut resolver = Resolver::new(&mut interpreter, context.clone());
+    resolver.resolve(&statements);
+    if context.borrow().had_error {
+        return Err(Box::new(errors::SemanticError::raise()));
+    }
+
+    interpreter.interpret(&statements)?;
 
     Ok(())
 }
