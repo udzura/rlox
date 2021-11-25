@@ -5,12 +5,3 @@ class Bacon {
 }
 
 Bacon().eat();
-
-class Egotist {
-  speak() {
-    print this;
-  }
-}
-
-var method = Egotist().speak;
-method();

@@ -35,7 +35,7 @@ impl Environment {
 
             Err(RuntimeBreak::raise(
                 name.clone(),
-                format!("Undefined variable '{}'.", &name.lexeme),
+                format!("Failed to assign variable '{}'.", &name.lexeme),
             ))
         }
     }

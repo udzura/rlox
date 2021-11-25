@@ -1,6 +1,7 @@
 use crate::callable::Callable;
 use crate::environment::Environment;
 use crate::errors::RuntimeBreak;
+use crate::instance::Instance;
 use crate::interpreter::Interpreter;
 use crate::stmt::Fun;
 use crate::value::Value;
@@ -43,6 +44,20 @@ impl Function {
             native: None,
             declaration: declaration,
             closure,
+        }
+    }
+
+    pub fn bind(&self, instance: Instance) -> Self {
+        let mut environment = Environment::new(self.closure.as_ref().cloned());
+        environment.define("this", Value::LoxInstance(instance));
+        let environment = Some(Rc::new(RefCell::new(environment)));
+
+        Self {
+            name: self.name.clone(),
+            arity_nr: self.arity_nr,
+            native: None,
+            declaration: self.declaration.as_ref().cloned(),
+            closure: environment,
         }
     }
 }

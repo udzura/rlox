@@ -388,6 +388,10 @@ impl ExprVisitor for Interpreter {
         ));
     }
 
+    fn visit_this(&mut self, expr: &This) -> Self::R {
+        self.lookup_variable(expr.0.as_ref())
+    }
+
     fn visit_grouping(&mut self, expr: &Grouping) -> Self::R {
         self.evaluate(expr.0.as_ref())
     }
@@ -442,10 +446,6 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_super(&mut self, expr: &Super) -> Self::R {
-        todo!()
-    }
-
-    fn visit_this(&mut self, expr: &This) -> Self::R {
         todo!()
     }
 }

@@ -1,0 +1,15 @@
+class Egotist {
+  speak() {
+    print "I am " + this.name;
+    this.sayFrom();
+  }
+
+  sayFrom() {
+    print "I'm from Japan.";
+  }
+}
+
+var egoist = Egotist();
+egoist.name = "udzura";
+var method = egoist.speak;
+method();

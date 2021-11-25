@@ -41,7 +41,7 @@ impl Instance {
         }
 
         if let Some(method) = class.find_method(&name.lexeme) {
-            method.bind(&self.clone());
+            let method = method.bind(self.clone());
             return Ok(Value::LoxFunction(method.clone()));
         }
 
