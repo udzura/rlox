@@ -176,6 +176,15 @@ impl StmtVisitor for Interpreter {
             .borrow_mut()
             .define(&stmt.0.as_ref().lexeme, Value::Nil);
 
+        if let Some(superklass) = &superclass {
+            let original = self.environment.take();
+            let original = Rc::new(RefCell::new(original));
+            self.environment = Rc::new(RefCell::new(Environment::new(Some(original))));
+            self.environment
+                .borrow_mut()
+                .define("super", Value::LoxClass(superklass.clone()));
+        }
+
         let mut methods = HashMap::new();
         for method in stmt.2.iter() {
             match method {
@@ -198,7 +207,18 @@ impl StmtVisitor for Interpreter {
             }
         }
 
-        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme, methods, superclass));
+        let class = Value::LoxClass(Klass::new(
+            &stmt.0.lexeme,
+            methods,
+            superclass.as_ref().cloned(),
+        ));
+        if superclass.is_some() {
+            let before = self.environment.take();
+            let original = before.take_enclosing().unwrap();
+            let original = Rc::new(RefCell::new(original));
+            self.environment = Rc::new(RefCell::new(Environment::new(Some(original))));
+        }
+
         self.environment
             .borrow_mut()
             .assign(&stmt.0.as_ref(), class)?;

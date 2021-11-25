@@ -418,6 +418,13 @@ impl Parser {
             return Ok(Expr::grouping(expr));
         }
 
+        if self.matching(&[TokenType::SUPER]) {
+            let keyword = self.previous();
+            self.consume(TokenType::DOT, "Expect '.' after 'super'.")?;
+            let method = self.consume(TokenType::IDENTIFIER, "Expect superclass method name.")?;
+            return Ok(Expr::super_(keyword.clone(), method.clone()));
+        }
+
         if self.matching(&[TokenType::THIS]) {
             return Ok(Expr::this(self.previous().clone()));
         }
