@@ -162,8 +162,7 @@ impl StmtVisitor for Interpreter {
                 Stmt::Fun_(fun) => {
                     let name = fun.0.as_ref();
                     let function = Function::new_lox(fun.clone(), Some(self.environment.clone()));
-                    let value = Value::LoxFunction(function);
-                    methods.insert(name.lexeme.clone(), value);
+                    methods.insert(name.lexeme.clone(), function);
                 }
                 _ => {
                     return Err(RuntimeBreak::raise(

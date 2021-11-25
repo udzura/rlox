@@ -7,6 +7,7 @@ use crate::visitor::*;
 
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FunctionType {
@@ -130,6 +131,12 @@ impl<'a> StmtVisitor for Resolver<'a> {
         self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
 
+        self.begin_scope();
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .insert(String::from_str("this").unwrap(), true);
+
         for method in stmt.2.iter() {
             match method {
                 Stmt::Fun_(fun) => self.resolve_function(fun, FunctionType::Method)?,
@@ -141,6 +148,9 @@ impl<'a> StmtVisitor for Resolver<'a> {
                 }
             }
         }
+
+        self.end_scope();
+
         Ok(())
     }
 
@@ -257,7 +267,7 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_this(&mut self, expr: &This) -> Self::R {
-        Ok(())
+        self.resolve_local(expr.0.as_ref())
     }
 
     fn visit_unary(&mut self, expr: &Unary) -> Self::R {

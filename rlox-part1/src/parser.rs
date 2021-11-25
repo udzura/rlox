@@ -411,6 +411,10 @@ impl Parser {
             return Ok(Expr::grouping(expr));
         }
 
+        if self.matching(&[TokenType::THIS]) {
+            return Ok(Expr::this(self.previous().clone()));
+        }
+
         if self.matching(&[TokenType::IDENTIFIER]) {
             return Ok(Expr::variable(self.previous().clone()));
         }

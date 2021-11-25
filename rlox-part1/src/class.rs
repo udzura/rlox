@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use crate::callable::Callable;
 use crate::errors::RuntimeBreak;
+use crate::function::Function;
 use crate::instance::*;
 use crate::interpreter::Interpreter;
 use crate::value::Value;
@@ -14,7 +15,7 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: impl Into<String>, methods: HashMap<String, Value>) -> Self {
+    pub fn new(name: impl Into<String>, methods: HashMap<String, Function>) -> Self {
         Self {
             core: Rc::new(ClassCore {
                 name: name.into(),
@@ -46,12 +47,12 @@ impl Callable for Class {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ClassCore {
     pub name: String,
-    pub methods: HashMap<String, Value>,
+    pub methods: HashMap<String, Function>,
     pub pool: RefCell<HashMap<u64, InstanceData>>,
 }
 
 impl ClassCore {
-    pub fn find_method(&self, key: &String) -> Option<&Value> {
+    pub fn find_method(&self, key: &String) -> Option<&Function> {
         self.methods.get(key)
     }
 }
