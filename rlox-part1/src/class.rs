@@ -15,11 +15,16 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: impl Into<String>, methods: HashMap<String, Function>) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        methods: HashMap<String, Function>,
+        superclass: Option<Class>,
+    ) -> Self {
         Self {
             core: Rc::new(ClassCore {
                 name: name.into(),
                 methods,
+                superclass,
                 ..Default::default()
             }),
         }
@@ -58,12 +63,20 @@ impl Callable for Class {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ClassCore {
     pub name: String,
+    pub superclass: Option<Class>,
     pub methods: HashMap<String, Function>,
     pub pool: RefCell<HashMap<u64, InstanceData>>,
 }
 
 impl ClassCore {
     pub fn find_method(&self, key: &str) -> Option<&Function> {
-        self.methods.get(key)
+        self.methods.get(key).or_else(|| {
+            if self.superclass.is_none() {
+                None
+            } else {
+                let superclass = self.superclass.as_ref().unwrap();
+                superclass.core.as_ref().find_method(key)
+            }
+        })
     }
 }

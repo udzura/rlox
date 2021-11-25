@@ -144,6 +144,19 @@ impl<'a> StmtVisitor for Resolver<'a> {
         self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
 
+        if let Some(superclass) = stmt.1.as_ref() {
+            if let Expr::Variable_(var) = superclass.as_ref() {
+                if stmt.0.as_ref().lexeme == var.0.as_ref().lexeme {
+                    return Err(RuntimeBreak::raise(
+                        var.0.as_ref().clone(),
+                        "A class can't inherit from itself.",
+                    ));
+                }
+            }
+
+            self.resolve_expr(superclass.as_ref())?;
+        }
+
         self.begin_scope();
         self.scopes
             .last_mut()

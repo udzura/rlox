@@ -10,7 +10,7 @@ type Statements = Vec<Stmt>;
 #[derive(Debug, Clone)]
 pub struct Block(pub Statements);
 #[derive(Debug, Clone)]
-pub struct Class(pub TokenP, pub Option<Box<Variable>>, pub Statements);
+pub struct Class(pub TokenP, pub Option<ExprP>, pub Statements);
 #[derive(Debug, Clone)]
 pub struct Expression(pub ExprP);
 #[derive(Debug, Clone)]
@@ -48,7 +48,7 @@ impl Stmt {
         Self::Block_(Block(statements))
     }
 
-    pub fn class(name: Token, superclass: Option<Variable>, methods: Statements) -> Self {
+    pub fn class(name: Token, superclass: Option<Expr>, methods: Statements) -> Self {
         Self::Class_(Class(
             Box::new(name),
             superclass.map(|e| Box::new(e)),

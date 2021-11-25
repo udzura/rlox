@@ -152,6 +152,26 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_class(&mut self, stmt: &Class) -> Self::R {
+        let mut superclass = None;
+        if let Some(expr) = stmt.1.as_ref() {
+            if let Expr::Variable_(var) = expr.as_ref() {
+                let evaluated = self.evaluate(expr.as_ref())?;
+                if let Value::LoxClass(class) = evaluated {
+                    superclass = Some(class);
+                } else {
+                    return Err(RuntimeBreak::raise(
+                        var.0.as_ref().clone(),
+                        "Superclass must be a class.",
+                    ));
+                }
+            } else {
+                return Err(RuntimeBreak::raise(
+                    stmt.0.as_ref().clone(),
+                    "[BUG] Not a variable.",
+                ));
+            }
+        }
+
         self.environment
             .borrow_mut()
             .define(&stmt.0.as_ref().lexeme, Value::Nil);
@@ -178,7 +198,7 @@ impl StmtVisitor for Interpreter {
             }
         }
 
-        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme, methods));
+        let class = Value::LoxClass(Klass::new(&stmt.0.lexeme, methods, superclass));
         self.environment
             .borrow_mut()
             .assign(&stmt.0.as_ref(), class)?;
