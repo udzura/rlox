@@ -4,6 +4,7 @@ use crate::errors::RuntimeBreak;
 use crate::instance::Instance;
 use crate::interpreter::Interpreter;
 use crate::stmt::Fun;
+use crate::token::Token;
 use crate::value::Value;
 
 use std::cell::RefCell;
@@ -14,6 +15,7 @@ use std::rc::Rc;
 pub struct Function {
     pub name: String,
     arity_nr: u8,
+    is_initializer: bool,
     native: Option<fn(&Interpreter, &[Value]) -> Value>,
     declaration: Option<Rc<Fun>>,
     closure: Option<Rc<RefCell<Environment>>>,
@@ -28,19 +30,25 @@ impl Function {
         Self {
             name: name.into(),
             arity_nr: arity_nr,
+            is_initializer: false,
             native: Some(native),
             declaration: None,
             closure: None,
         }
     }
 
-    pub fn new_lox(declaration: Rc<Fun>, closure: Option<Rc<RefCell<Environment>>>) -> Self {
+    pub fn new_lox(
+        declaration: Rc<Fun>,
+        closure: Option<Rc<RefCell<Environment>>>,
+        is_initializer: bool,
+    ) -> Self {
         let name = declaration.0.as_ref().lexeme.clone();
         let arity_nr = declaration.1.len() as u8;
         let declaration = Some(declaration);
         Self {
             name,
             arity_nr,
+            is_initializer: is_initializer,
             native: None,
             declaration: declaration,
             closure,
@@ -55,6 +63,7 @@ impl Function {
         Self {
             name: self.name.clone(),
             arity_nr: self.arity_nr,
+            is_initializer: self.is_initializer,
             native: None,
             declaration: self.declaration.as_ref().cloned(),
             closure: environment,
@@ -99,6 +108,14 @@ impl Callable for Function {
                 Err(RuntimeBreak::Return { value }) => Ok(value),
                 Err(err) => Err(err),
             };
+
+            if self.is_initializer {
+                return Environment::get_at(
+                    self.closure.as_ref().unwrap().clone(),
+                    0,
+                    &Token::this(),
+                );
+            }
             ret
         } else {
             panic!("[BUG] invalid function decleration")

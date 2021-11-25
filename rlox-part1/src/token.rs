@@ -153,6 +153,10 @@ impl Token {
             line,
         }
     }
+
+    pub fn this() -> Self {
+        Self::new(0, TokenType::THIS, "this", Literal::Nil, 0)
+    }
 }
 
 impl fmt::Display for Token {

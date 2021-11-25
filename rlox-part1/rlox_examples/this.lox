@@ -1,4 +1,8 @@
 class Egotist {
+  init() {
+    return nil;
+  }
+
   speak() {
     print "I am " + this.name;
     this.sayFrom();
@@ -13,3 +17,5 @@ var egoist = Egotist();
 egoist.name = "udzura";
 var method = egoist.speak;
 method();
+
+print egoist.init();

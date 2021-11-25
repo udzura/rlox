@@ -2,6 +2,7 @@ use crate::errors::RuntimeBreak;
 use crate::expr::*;
 use crate::interpreter::Interpreter;
 use crate::stmt::*;
+use crate::token::Literal;
 use crate::token::Token;
 use crate::visitor::*;
 
@@ -13,6 +14,7 @@ use std::str::FromStr;
 enum FunctionType {
     None,
     Function,
+    Initializer,
     Method,
 }
 
@@ -150,7 +152,15 @@ impl<'a> StmtVisitor for Resolver<'a> {
 
         for method in stmt.2.iter() {
             match method {
-                Stmt::Fun_(fun) => self.resolve_function(fun, FunctionType::Method)?,
+                Stmt::Fun_(fun) => {
+                    let declaration = if &fun.0.as_ref().lexeme == "init" {
+                        FunctionType::Initializer
+                    } else {
+                        FunctionType::Method
+                    };
+
+                    self.resolve_function(fun, declaration)?;
+                }
                 _ => {
                     return Err(RuntimeBreak::raise(
                         stmt.0.as_ref().clone(),
@@ -198,7 +208,23 @@ impl<'a> StmtVisitor for Resolver<'a> {
             ));
         }
 
-        self.resolve_expr(stmt.1.as_ref())
+        let value = stmt.1.as_ref();
+        if match value {
+            Expr::Literal_(Lit(b)) => {
+                if let Literal::Nil = b.as_ref() {
+                    false
+                } else {
+                    true
+                }
+            }
+            _ => self.current_function == FunctionType::Initializer,
+        } {
+            return Err(RuntimeBreak::raise(
+                stmt.0.as_ref().clone(),
+                "Can't return a value from an initializer.",
+            ));
+        }
+        self.resolve_expr(value)
     }
 
     fn visit_var(&mut self, stmt: &Var) -> Self::R {

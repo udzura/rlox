@@ -161,7 +161,12 @@ impl StmtVisitor for Interpreter {
             match method {
                 Stmt::Fun_(fun) => {
                     let name = fun.0.as_ref();
-                    let function = Function::new_lox(fun.clone(), Some(self.environment.clone()));
+                    let is_initializer = &name.lexeme == "init";
+                    let function = Function::new_lox(
+                        fun.clone(),
+                        Some(self.environment.clone()),
+                        is_initializer,
+                    );
                     methods.insert(name.lexeme.clone(), function);
                 }
                 _ => {
@@ -188,7 +193,7 @@ impl StmtVisitor for Interpreter {
 
     fn visit_fun(&mut self, stmt: &Rc<Fun>) -> Self::R {
         let name = &stmt.0.as_ref().lexeme;
-        let function = Function::new_lox(stmt.clone(), Some(self.environment.clone()));
+        let function = Function::new_lox(stmt.clone(), Some(self.environment.clone()), false);
         let value = Value::LoxFunction(function);
         self.environment.borrow_mut().define(name, value);
 
