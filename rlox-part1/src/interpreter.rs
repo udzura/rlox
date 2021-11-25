@@ -433,6 +433,30 @@ impl ExprVisitor for Interpreter {
         ));
     }
 
+    fn visit_super(&mut self, expr: &Super) -> Self::R {
+        let distance = self.locals.get(expr.0.as_ref()).unwrap();
+        let superclass = Environment::get_at(self.environment.clone(), *distance, expr.0.as_ref())?;
+
+        let object = Environment::get_at(self.environment.clone(), *distance - 1, &Token::this())?;
+
+        if let (Value::LoxClass(superclass), Value::LoxInstance(object)) = (&superclass, &object) {
+            let method = superclass
+                .find_method(&expr.1.as_ref().lexeme)
+                .ok_or_else(|| {
+                    RuntimeBreak::raise(
+                        expr.1.as_ref().clone(),
+                        format!("Undefined property '{}'.", &expr.1.as_ref().lexeme),
+                    )
+                })?;
+            Ok(Value::LoxFunction(method.bind(object.clone())))
+        } else {
+            Err(RuntimeBreak::raise(
+                expr.0.as_ref().clone(),
+                format!("[BUG] Superclass isnt a Class || This isnt a instance."),
+            ))
+        }
+    }
+
     fn visit_this(&mut self, expr: &This) -> Self::R {
         self.lookup_variable(expr.0.as_ref())
     }
@@ -488,9 +512,5 @@ impl ExprVisitor for Interpreter {
 
     fn visit_null(&mut self) -> Self::R {
         Ok(Value::Nil)
-    }
-
-    fn visit_super(&mut self, expr: &Super) -> Self::R {
-        todo!()
     }
 }

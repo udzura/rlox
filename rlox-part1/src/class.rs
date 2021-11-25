@@ -33,6 +33,11 @@ impl Class {
     pub fn name(&self) -> &str {
         &self.core.name
     }
+
+    /// Just delegates find_method to core
+    pub fn find_method(&self, key: &str) -> Option<&Function> {
+        self.core.as_ref().find_method(key)
+    }
 }
 
 impl Callable for Class {
