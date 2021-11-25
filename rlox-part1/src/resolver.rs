@@ -22,6 +22,7 @@ enum FunctionType {
 enum ClassType {
     None,
     Class,
+    SubClass,
 }
 
 #[derive(Debug)]
@@ -143,6 +144,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
         self.define(stmt.0.as_ref());
 
         if let Some(superclass) = stmt.1.as_ref() {
+            self.current_class = ClassType::SubClass;
             if let Expr::Variable_(var) = superclass.as_ref() {
                 if stmt.0.as_ref().lexeme == var.0.as_ref().lexeme {
                     return Err(RuntimeBreak::raise(
@@ -322,6 +324,22 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_super(&mut self, expr: &Super) -> Self::R {
+        match self.current_class {
+            ClassType::None => {
+                return Err(RuntimeBreak::raise(
+                    expr.0.as_ref().clone(),
+                    "Can't use 'super' outside of a class.",
+                ))
+            }
+            ClassType::Class => {
+                return Err(RuntimeBreak::raise(
+                    expr.0.as_ref().clone(),
+                    "Can't use 'super' in a class with no superclass.",
+                ))
+            }
+            _ => {}
+        }
+
         self.resolve_local(expr.0.as_ref())
     }
 
