@@ -141,7 +141,6 @@ impl Interpreter {
     }
 }
 
-#[allow(unused_variables)]
 impl StmtVisitor for Interpreter {
     type R = Result<(), RuntimeBreak>;
 
@@ -176,10 +175,12 @@ impl StmtVisitor for Interpreter {
             .borrow_mut()
             .define(&stmt.0.as_ref().lexeme, Value::Nil);
 
+        let mut replacement = Rc::new(RefCell::new(Environment::default()));
+
         if let Some(superklass) = &superclass {
-            let original = self.environment.take();
-            let original = Rc::new(RefCell::new(original));
-            self.environment = Rc::new(RefCell::new(Environment::new(Some(original))));
+            let original = self.environment.clone();
+            replacement = Rc::new(RefCell::new(Environment::new(Some(original))));
+            std::mem::swap(&mut self.environment, &mut replacement);
             self.environment
                 .borrow_mut()
                 .define("super", Value::LoxClass(superklass.clone()));
@@ -213,10 +214,7 @@ impl StmtVisitor for Interpreter {
             superclass.as_ref().cloned(),
         ));
         if superclass.is_some() {
-            let before = self.environment.take();
-            let original = before.take_enclosing().unwrap();
-            let original = Rc::new(RefCell::new(original));
-            self.environment = Rc::new(RefCell::new(Environment::new(Some(original))));
+            std::mem::swap(&mut self.environment, &mut replacement);
         }
 
         self.environment
@@ -285,7 +283,6 @@ impl StmtVisitor for Interpreter {
     }
 }
 
-#[allow(unused_variables)]
 impl ExprVisitor for Interpreter {
     type R = Result<Value, RuntimeBreak>;
 

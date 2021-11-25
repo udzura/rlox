@@ -1,6 +1,8 @@
 class A {
   method() {
     print "A method";
+    // print this;
+    print this.a_value;
   }
 }
 
@@ -10,8 +12,13 @@ class B < A {
   }
 
   test() {
+    // print this;
     super.method();
   }
 }
 
-print A;
+class C < B {}
+
+var c = C();
+c.a_value = "Value";
+c.test();

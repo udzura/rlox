@@ -32,7 +32,6 @@ pub struct Resolver<'a> {
     current_class: ClassType,
 }
 
-#[allow(unused_variables)]
 impl<'a> Resolver<'a> {
     pub fn new(interpreter: &'a mut Interpreter) -> Self {
         let scopes = Vec::new();
@@ -126,7 +125,6 @@ impl<'a> Resolver<'a> {
     }
 }
 
-#[allow(unused_variables)]
 impl<'a> StmtVisitor for Resolver<'a> {
     type R = Result<(), RuntimeBreak>;
 
@@ -276,12 +274,11 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 }
 
-#[allow(unused_variables)]
 impl<'a> ExprVisitor for Resolver<'a> {
     type R = Result<(), RuntimeBreak>;
 
     fn visit_assign(&mut self, expr: &Assign) -> Self::R {
-        let expr_ = Expr::Assign_(expr.clone());
+        //let expr_ = Expr::Assign_(expr.clone());
         self.resolve_expr(expr.1.as_ref())?;
         self.resolve_local(expr.0.as_ref())
     }
@@ -308,7 +305,7 @@ impl<'a> ExprVisitor for Resolver<'a> {
         self.resolve_expr(expr.0.as_ref())
     }
 
-    fn visit_literal(&mut self, expr: &Lit) -> Self::R {
+    fn visit_literal(&mut self, _expr: &Lit) -> Self::R {
         Ok(())
     }
 
