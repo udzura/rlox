@@ -10,10 +10,16 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum FunctionType {
-    None = 0,
-    Function = 1,
-    Method = 2,
+enum FunctionType {
+    None,
+    Function,
+    Method,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum ClassType {
+    None,
+    Class,
 }
 
 #[derive(Debug)]
@@ -21,6 +27,7 @@ pub struct Resolver<'a> {
     pub interpreter: &'a mut Interpreter,
     pub scopes: Vec<HashMap<String, bool>>,
     current_function: FunctionType,
+    current_class: ClassType,
 }
 
 #[allow(unused_variables)]
@@ -31,6 +38,7 @@ impl<'a> Resolver<'a> {
             interpreter,
             scopes,
             current_function: FunctionType::None,
+            current_class: ClassType::None,
         }
     }
 
@@ -128,6 +136,9 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_class(&mut self, stmt: &Class) -> Self::R {
+        let enclosing_class = self.current_class;
+        self.current_class = ClassType::Class;
+
         self.declare(stmt.0.as_ref())?;
         self.define(stmt.0.as_ref());
 
@@ -150,6 +161,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
         }
 
         self.end_scope();
+        self.current_class = enclosing_class;
 
         Ok(())
     }
@@ -267,7 +279,13 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_this(&mut self, expr: &This) -> Self::R {
-        self.resolve_local(expr.0.as_ref())
+        match self.current_class {
+            ClassType::None => Err(RuntimeBreak::raise(
+                expr.0.as_ref().clone(),
+                "Can't use 'this' outside of a class.",
+            )),
+            _ => self.resolve_local(expr.0.as_ref()),
+        }
     }
 
     fn visit_unary(&mut self, expr: &Unary) -> Self::R {

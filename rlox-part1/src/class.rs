@@ -32,15 +32,26 @@ impl Class {
 
 impl Callable for Class {
     fn arity(&self) -> u8 {
-        0
+        if let Some(initializer) = self.core.find_method("init") {
+            initializer.arity()
+        } else {
+            0
+        }
     }
 
     fn call(
         &self,
-        _interpreter: &mut Interpreter,
-        _arguments: &[Value],
+        interpreter: &mut Interpreter,
+        arguments: &[Value],
     ) -> Result<Value, RuntimeBreak> {
-        Ok(Value::LoxInstance(Instance::new(self.core.clone())))
+        let instance = Instance::new(self.core.clone());
+        if let Some(initializer) = self.core.find_method("init") {
+            initializer
+                .bind(instance.clone())
+                .call(interpreter, arguments)?;
+        }
+
+        Ok(Value::LoxInstance(instance))
     }
 }
 
@@ -52,7 +63,7 @@ pub struct ClassCore {
 }
 
 impl ClassCore {
-    pub fn find_method(&self, key: &String) -> Option<&Function> {
+    pub fn find_method(&self, key: &str) -> Option<&Function> {
         self.methods.get(key)
     }
 }

@@ -1,7 +1,11 @@
 class Bacon {
+  init(name) {
+    this.name = name;
+  }
+
   eat() {
-    print "Crunch crunch crunch!";
+    print "[" + this.name + "] Crunch crunch crunch!";
   }
 }
 
-Bacon().eat();
+Bacon("Oyama").eat();
