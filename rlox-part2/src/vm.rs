@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use crate::chunk::OpCode::*;
 use crate::chunk::*;
+use crate::value::Value;
 
 pub struct Vm {
     chunk: Option<Rc<RefCell<Chunk>>>,
@@ -31,21 +32,40 @@ impl Vm {
         Err(reason)
     }
 
-    pub fn run(&mut self) -> InterpretResult {
+    fn run(&mut self) -> InterpretResult {
         loop {
-            let instruction: OpCode = self.read_byte();
+            #[cfg(feature = "trace_execution")]
+            self.chunk
+                .as_ref()
+                .and_then(|chunk| Some(chunk.borrow().disassemble_instruction(self.ip)));
+
+            let instruction: OpCode = self.read_byte::<OpCode>();
             match instruction {
+                OP_CONSTANT => {
+                    let constant = self.read_constant();
+                    println!("{:?}", constant);
+                }
                 OP_RETURN => return Ok(()),
-                _ => {}
+                _ => {
+                    break;
+                }
             };
         }
         return Ok(());
     }
 
-    pub fn read_byte(&mut self) -> OpCode {
+    fn read_byte<T>(&mut self) -> T
+    where
+        T: From<u8>,
+    {
         let ret = self.chunk.as_ref().unwrap().borrow().code[self.ip];
         self.ip += 1;
         ret.into()
+    }
+
+    fn read_constant(&mut self) -> Value {
+        let cursor: usize = self.read_byte::<usize>();
+        self.chunk.as_ref().unwrap().borrow().constants[cursor]
     }
 }
 

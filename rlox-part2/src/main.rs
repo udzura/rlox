@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     chunk.write(OP_RETURN as u8, 123);
 
-    chunk.disassemble("test chunk");
+    // chunk.disassemble("test chunk");
 
     let chunk = Rc::new(RefCell::new(chunk));
 

@@ -1,0 +1,2 @@
+[alias]
+run_trace = ["run", "--features=trace_execution"]
