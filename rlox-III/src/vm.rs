@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::chunk::*;
+use crate::compiler;
 use crate::value::Value;
 use crate::OpCode;
 use crate::OpCode::*;
@@ -40,13 +41,8 @@ impl Vm {
         };
     }
 
-    pub fn interpret(chunk: Rc<RefCell<Chunk>>) -> InterpretResult {
-        unsafe {
-            VM.chunk = Some(chunk.clone());
-            VM.ip = 0;
-
-            VM.run()
-        }?;
+    pub fn interpret(source: String) -> InterpretResult {
+        compiler::compile(source)?;
         Ok(())
     }
 
@@ -149,4 +145,4 @@ impl fmt::Display for InterpretErrorCode {
 
 impl Error for InterpretErrorCode {}
 
-type InterpretResult = Result<(), InterpretErrorCode>;
+pub type InterpretResult = Result<(), InterpretErrorCode>;
