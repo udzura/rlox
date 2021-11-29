@@ -79,7 +79,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rlox-part2"
+name = "rlox-iii"
 version = "0.1.0"
 
 [[package]]
