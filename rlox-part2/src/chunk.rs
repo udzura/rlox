@@ -1,26 +1,6 @@
 use crate::value::Value;
 
-#[allow(non_camel_case_types)]
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-pub enum OpCode {
-    OP_CONSTANT,
-    OP_RETURN,
-
-    UNKNOWN,
-}
-
-impl From<u8> for OpCode {
-    fn from(from: u8) -> Self {
-        use self::OpCode::*;
-        match from {
-            0 => OP_CONSTANT,
-            1 => OP_RETURN,
-            _ => UNKNOWN,
-        }
-    }
-}
-
+#[derive(Debug)]
 pub struct Chunk {
     count: usize,
     #[allow(dead_code)]
@@ -51,7 +31,7 @@ impl Chunk {
     }
 
     pub fn add_constant(&mut self, value: f64) -> usize {
-        self.constants.push(Value(value));
+        self.constants.push(Value::new(value));
         self.constants.len() - 1
     }
 }
@@ -69,7 +49,7 @@ impl Chunk {
 
     #[cfg(debug_assertions)]
     pub fn disassemble_instruction(&self, offset: usize) -> usize {
-        use self::OpCode::*;
+        use crate::OpCode::*;
         print!("{:04} ", offset);
 
         if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
@@ -81,6 +61,11 @@ impl Chunk {
         let instruction = self.code[offset];
         match instruction.into() {
             OP_CONSTANT => instructions::constant("OP_CONSTANT", self, offset),
+            OP_ADD => instructions::simple("OP_ADD", offset),
+            OP_SUBTRACT => instructions::simple("OP_SUBTRACT", offset),
+            OP_MULTIPLY => instructions::simple("OP_MULTIPLY", offset),
+            OP_DIVIDE => instructions::simple("OP_DIVIDE", offset),
+            OP_NEGATE => instructions::simple("OP_NEGATE", offset),
             OP_RETURN => instructions::simple("OP_RETURN", offset),
             _ => {
                 println!("Unknown opcode: {}", &instruction);
