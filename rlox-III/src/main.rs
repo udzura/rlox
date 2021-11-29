@@ -1,9 +1,9 @@
-extern crate rlox_part2;
+extern crate rlox_iii;
 use std::cell::RefCell;
 use std::error::Error;
 use std::rc::Rc;
 
-use rlox_part2::*;
+use rlox_iii::*;
 use OpCode::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
