@@ -1,5 +1,4 @@
 #![feature(box_into_inner)]
-
 use std::cell::RefCell;
 use std::error::Error;
 use std::fs::File;

@@ -81,10 +81,9 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    pub fn resolve(&mut self, token: Token, depth: usize) -> Result<(), RuntimeBreak> {
+    pub fn resolve(&mut self, token: Token, depth: usize) -> () {
         // dbg!(&token, &depth);
         self.locals.insert(token, depth);
-        Ok(())
     }
 
     fn lookup_variable(&mut self, name: &Token) -> Result<Value, RuntimeBreak> {

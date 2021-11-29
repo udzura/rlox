@@ -72,7 +72,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rlox-part1"
+name = "rlox-ii"
 version = "0.1.0"
 dependencies = [
  "rand",

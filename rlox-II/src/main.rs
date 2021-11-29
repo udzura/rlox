@@ -3,8 +3,9 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::process::exit;
 
-extern crate rlox_part1;
-use rlox_part1::*;
+#[allow(non_snake_case)]
+extern crate rlox_ii;
+use rlox_ii::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     match args().len() {

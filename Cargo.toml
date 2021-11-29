@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "rlox-part1",
-  "rlox-part2",
+  "rlox-II",
+  "rlox-III",
 ]

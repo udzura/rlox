@@ -1,7 +1,7 @@
-extern crate rlox_part1;
-use rlox_part1::ast_printer::AstPrinter;
-use rlox_part1::expr::*;
-use rlox_part1::token::*;
+extern crate rlox_ii;
+use rlox_ii::ast_printer::AstPrinter;
+use rlox_ii::expr::*;
+use rlox_ii::token::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let expression = Expr::binary(
