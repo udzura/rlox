@@ -9,20 +9,13 @@ use crate::OpCode::*;
 
 const STACK_MAX: usize = 256;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Vm {
     chunk: Option<Rc<RefCell<Chunk>>>,
     ip: usize,
     stack: Vec<Value>,
     stack_top: usize,
 }
-
-static mut VM: Vm = Vm {
-    chunk: None,
-    ip: 0,
-    stack: Vec::new(),
-    stack_top: 0,
-};
 
 macro_rules! binary_op {
     ($self:ident, $op:tt) => {
@@ -34,15 +27,25 @@ macro_rules! binary_op {
 }
 
 impl Vm {
-    pub fn init_vm() {
-        unsafe {
-            VM.stack = Vec::with_capacity(STACK_MAX);
-            VM.stack_top = 0;
-        };
+    pub fn init_vm() -> Self {
+        Vm {
+            chunk: None,
+            ip: 0,
+            stack: Vec::with_capacity(STACK_MAX),
+            stack_top: 0,
+        }
     }
 
     pub fn interpret(source: String) -> InterpretResult {
-        compiler::compile(source)?;
+        let chunk = Chunk::new();
+        let mut vm = Vm::init_vm();
+
+        compiler::compile(source, &chunk)?;
+
+        vm.chunk = Some(Rc::new(RefCell::new(chunk)));
+        vm.ip = 0;
+        vm.run()?;
+
         Ok(())
     }
 

@@ -299,20 +299,23 @@ impl<'src> Scanner<'src> {
     }
 
     fn make_token(&mut self, token_type: TokenType) -> Token {
+        let string = self.source[self.start..self.current].to_owned();
         Token {
             token_type,
-            start: &(self.source[self.start..]),
+            start: self.start,
             length: self.current - self.start,
             line: self.line,
+            string,
         }
     }
 
     pub fn error(&mut self, message: &'static str) -> Token {
         Token {
             token_type: TokenType::ERROR,
-            start: message,
+            start: 0,
             length: message.len(),
             line: self.line,
+            string: message.to_string(),
         }
     }
 
@@ -334,22 +337,39 @@ fn is_alphanumeric(c: char) -> bool {
 }
 
 #[derive(Debug)]
-pub struct Token<'src> {
+pub struct Token {
     pub token_type: TokenType,
-    start: &'src str,
-    length: usize,
+    pub start: usize,
+    pub length: usize,
+    pub string: String,
     pub line: i64,
 }
 
-impl<'src> Token<'src> {
-    pub fn strref(&self) -> &'src str {
-        &self.start[..self.length]
+impl Token {
+    pub fn null() -> Self {
+        Self {
+            token_type: TokenType::UNINIT,
+            start: 0,
+            length: 0,
+            string: "".to_string(),
+            line: 0,
+        }
+    }
+
+    pub fn strref(&self) -> &str {
+        &self.string
+    }
+
+    pub fn getstr(&self) -> String {
+        self.string.clone()
     }
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenType {
+    UNINIT,
+
     // Single-character tokens.
     LEFT_PAREN,
     RIGHT_PAREN,
