@@ -360,7 +360,7 @@ impl Token {
         &self.string
     }
 
-    pub fn getstr(&self) -> String {
+    pub fn getstring(&self) -> String {
         self.string.clone()
     }
 }

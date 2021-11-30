@@ -4,6 +4,7 @@ use crate::vm::*;
 
 use crate::scanner::TokenType::*;
 
+use std::cell::Cell;
 use std::cell::RefCell;
 use std::mem;
 
@@ -11,7 +12,8 @@ struct Parser<'src> {
     scanner: RefCell<Scanner<'src>>,
     current: Token,
     previous: Token,
-    had_error: bool,
+    had_error: Cell<bool>,
+    panic_mode: Cell<bool>,
 }
 
 impl<'src> Parser<'src> {
@@ -20,7 +22,8 @@ impl<'src> Parser<'src> {
             scanner,
             current: Token::null(),
             previous: Token::null(),
-            had_error: false,
+            had_error: Cell::new(false),
+            panic_mode: Cell::new(false),
         }
     }
 
@@ -33,22 +36,25 @@ impl<'src> Parser<'src> {
                 break;
             };
 
-            let message = self.current.getstr();
+            let message = self.current.getstring();
             self.error_at_current(message);
         }
     }
 
     fn error_at_current(&mut self, message: String) {
-        self.had_error = true;
         self.error_at(&self.current, message);
     }
 
     fn error(&mut self, message: String) {
-        self.had_error = true;
         self.error_at(&self.previous, message);
     }
 
     fn error_at(&self, token: &Token, message: String) {
+        if self.panic_mode.get() {
+            return;
+        }
+        self.panic_mode.set(true);
+
         eprint!("[line {}] Error", token.line);
         match token.token_type {
             EOF => {
@@ -61,6 +67,7 @@ impl<'src> Parser<'src> {
             }
         }
         eprintln!(": {}", message);
+        self.had_error.set(true);
     }
 }
 
@@ -71,7 +78,7 @@ pub fn compile(source: String, chunk: &Chunk) -> InterpretResult {
     parser.advance();
     //parser.expression();
     //parser.consume(EOF, "Expect end of expression.");
-    if !parser.had_error {
+    if !parser.had_error.get() {
         Ok(())
     } else {
         Err(InterpretErrorCode::CompileError)
