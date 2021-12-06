@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::mem;
 
 #[allow(non_camel_case_types)]
+#[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Precedence {
     NONE,
@@ -26,12 +27,30 @@ pub enum Precedence {
     PRIMARY,
 }
 
+impl Precedence {
+    pub fn succ(self) -> Self {
+        match self {
+            Self::NONE => Self::ASSIGNMENT,
+            Self::ASSIGNMENT => Self::OR,
+            Self::OR => Self::AND,
+            Self::AND => Self::EQUALITY,
+            Self::EQUALITY => Self::COMPARISON,
+            Self::COMPARISON => Self::TERM,
+            Self::TERM => Self::FACTOR,
+            Self::FACTOR => Self::UNARY,
+            Self::UNARY => Self::CALL,
+            Self::CALL => Self::PRIMARY,
+            Self::PRIMARY => Self::PRIMARY,
+        }
+    }
+}
+
 type ParseFn = fn(&mut Parser) -> ();
 
-struct ParseRule {
-    prefix: Option<ParseFn>,
-    infix: Option<ParseFn>,
-    precedence: Precedence,
+pub struct ParseRule {
+    pub prefix: Option<ParseFn>,
+    pub infix: Option<ParseFn>,
+    pub precedence: Precedence,
 }
 macro_rules! rule {
     (None, None, $precedence:ident) => {
@@ -41,33 +60,73 @@ macro_rules! rule {
             precedence: Precedence::$precedence,
         }
     };
-    ($prefix:path, None, $precedence:ident) => {
+    ($prefix:ident, None, $precedence:ident) => {
         ParseRule {
             prefix: None,
             infix: None,
             precedence: Precedence::$precedence,
         }
     };
-    (None, $infix:path, $precedence:ident) => {
+    (None, $infix:ident, $precedence:ident) => {
         ParseRule {
             prefix: None,
             infix: None,
             precedence: Precedence::$precedence,
         }
     };
-    ($prefix:path, $infix:path, $precedence:ident) => {
+    ($prefix:ident, $infix:ident, $precedence:ident) => {
         ParseRule {
-            prefix: Some($prefix),
-            infix: Some($infix),
+            prefix: Some(parsefun::$prefix),
+            infix: Some(parsefun::$infix),
             precedence: Precedence::$precedence,
         }
     };
 }
 
 /// Rules indexed by [TokenType]
-const RULES: [ParseRule; 2] = [
-    rule!(None, None, NONE),                        // UNINIT
-    rule!(parsefun::unary, parsefun::binary, NONE), // MINUS
+const RULES: [ParseRule; 41] = [
+    rule!(None, None, NONE), // UNINIT,
+    // follow text
+    rule!(grouping, None, NONE), // LEFT_PAREN,
+    rule!(None, None, NONE),     // RIGHT_PAREN,
+    rule!(None, None, NONE),     // LEFT_BRACE,
+    rule!(None, None, NONE),     // RIGHT_BRACE,
+    rule!(None, None, NONE),     // COMMA,
+    rule!(None, None, NONE),     // DOT,
+    rule!(unary, binary, TERM),  // MINUS,
+    rule!(None, binary, TERM),   // PLUS,
+    rule!(None, None, NONE),     // SEMICOLON,
+    rule!(None, binary, FACTOR), // SLASH,
+    rule!(None, binary, FACTOR), // STAR,
+    rule!(None, None, NONE),     // BANG,
+    rule!(None, None, NONE),     // BANG_EQUAL,
+    rule!(None, None, NONE),     // EQUAL,
+    rule!(None, None, NONE),     // EQUAL_EQUAL,
+    rule!(None, None, NONE),     // GREATER,
+    rule!(None, None, NONE),     // GREATER_EQUAL,
+    rule!(None, None, NONE),     // LESS,
+    rule!(None, None, NONE),     // LESS_EQUAL,
+    rule!(None, None, NONE),     // IDENTIFIER,
+    rule!(None, None, NONE),     // STRING,
+    rule!(number, None, NONE),   // NUMBER,
+    rule!(None, None, NONE),     // AND,
+    rule!(None, None, NONE),     // CLASS,
+    rule!(None, None, NONE),     // ELSE,
+    rule!(None, None, NONE),     // FALSE,
+    rule!(None, None, NONE),     // FOR,
+    rule!(None, None, NONE),     // FUN,
+    rule!(None, None, NONE),     // IF,
+    rule!(None, None, NONE),     // NIL,
+    rule!(None, None, NONE),     // OR,
+    rule!(None, None, NONE),     // PRINT,
+    rule!(None, None, NONE),     // RETURN,
+    rule!(None, None, NONE),     // SUPER,
+    rule!(None, None, NONE),     // THIS,
+    rule!(None, None, NONE),     // TRUE,
+    rule!(None, None, NONE),     // VAR,
+    rule!(None, None, NONE),     // WHILE,
+    rule!(None, None, NONE),     // ERROR,
+    rule!(None, None, NONE),     // EOF,
 ];
 
 pub struct Parser<'src, 'c> {
@@ -122,17 +181,30 @@ impl<'src, 'c> Parser<'src, 'c> {
         self.parse_precedence(Precedence::ASSIGNMENT);
     }
 
-    pub fn number(&mut self) {
-        let value: f64 = self.previous.strref().parse().unwrap_or_else(|_| 0.0);
-        self.emit_constant(Value::new(value));
-    }
+    pub fn parse_precedence(&mut self, precedence: Precedence) {
+        self.advance();
+        let prefix_rule = parsefun::get_rule(self.previous.token_type).prefix;
+        match prefix_rule {
+            None => {
+                self.error("Expect expression.");
+                return;
+            }
+            Some(prefix_rule) => prefix_rule(self),
+        }
 
-    pub fn grouping(&mut self) {
-        self.expression();
-        self.consume(RIGHT_PAREN, "Expect ')' after expression.");
+        let precedence = precedence as usize;
+        while precedence <= parsefun::get_rule(self.current.token_type).precedence as usize {
+            self.advance();
+            let infix_rule = parsefun::get_rule(self.previous.token_type).infix;
+            match infix_rule {
+                None => {
+                    self.error("Expect valid rule.");
+                    return;
+                }
+                Some(infix_rule) => infix_rule(self),
+            }
+        }
     }
-
-    pub fn parse_precedence(&self, precedence: Precedence) {}
 
     fn emit_constant(&mut self, value: Value) {
         let constant = self.make_constant(&value);
@@ -194,13 +266,28 @@ impl<'src, 'c> Parser<'src, 'c> {
 
 mod parsefun {
     use super::*;
+    use OpCode::*;
+    pub fn get_rule(operator_type: TokenType) -> &'static ParseRule {
+        RULES.get(operator_type as usize).unwrap()
+    }
+
+    pub fn number(scanneer: &mut Parser) {
+        let value: f64 = scanneer.previous.strref().parse().unwrap_or_else(|_| 0.0);
+        scanneer.emit_constant(Value::new(value));
+    }
+
+    pub fn grouping(scanneer: &mut Parser) {
+        scanneer.expression();
+        scanneer.consume(RIGHT_PAREN, "Expect ')' after expression.");
+    }
+
     pub fn unary(scanneer: &mut Parser) {
         let operator_type = scanneer.previous.token_type;
         scanneer.parse_precedence(Precedence::UNARY);
 
         match operator_type {
             MINUS => {
-                scanneer.emit_byte(OpCode::OP_NEGATE as u8);
+                scanneer.emit_byte(OP_NEGATE as u8);
             }
             _ => {
                 return;
@@ -208,7 +295,21 @@ mod parsefun {
         }
     }
 
-    pub fn binary(scanneer: &mut Parser) {}
+    pub fn binary(scanneer: &mut Parser) {
+        let operator_type = scanneer.previous.token_type;
+        let rule: &ParseRule = get_rule(operator_type);
+        scanneer.parse_precedence(rule.precedence.succ());
+
+        match operator_type {
+            PLUS => scanneer.emit_byte(OP_ADD as u8),
+            MINUS => scanneer.emit_byte(OP_SUBTRACT as u8),
+            STAR => scanneer.emit_byte(OP_MULTIPLY as u8),
+            SLASH => scanneer.emit_byte(OP_DIVIDE as u8),
+            op => {
+                unreachable!("Maybe a bug")
+            }
+        }
+    }
 }
 
 pub fn compile(source: String, chunk: &mut Chunk) -> InterpretResult {
