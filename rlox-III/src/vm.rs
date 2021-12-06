@@ -37,10 +37,10 @@ impl Vm {
     }
 
     pub fn interpret(source: String) -> InterpretResult {
-        let chunk = Chunk::new();
+        let mut chunk = Chunk::new();
         let mut vm = Vm::init_vm();
 
-        compiler::compile(source, &chunk)?;
+        compiler::compile(source, &mut chunk)?;
 
         vm.chunk = Some(Rc::new(RefCell::new(chunk)));
         vm.ip = 0;

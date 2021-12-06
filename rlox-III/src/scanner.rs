@@ -367,6 +367,7 @@ impl Token {
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+// #[expr(usize)]
 pub enum TokenType {
     UNINIT,
 
