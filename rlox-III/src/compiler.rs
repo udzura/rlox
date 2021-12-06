@@ -48,34 +48,39 @@ impl Precedence {
 type ParseFn = fn(&mut Parser) -> ();
 
 pub struct ParseRule {
+    pub idx: TokenType,
     pub prefix: Option<ParseFn>,
     pub infix: Option<ParseFn>,
     pub precedence: Precedence,
 }
 macro_rules! rule {
-    (None, None, $precedence:ident) => {
+    ($tt:ident, None, None, $precedence:ident) => {
         ParseRule {
+            idx: TokenType::$tt,
             prefix: None,
             infix: None,
             precedence: Precedence::$precedence,
         }
     };
-    ($prefix:ident, None, $precedence:ident) => {
+    ($tt:ident, $prefix:ident, None, $precedence:ident) => {
         ParseRule {
-            prefix: None,
+            idx: TokenType::$tt,
+            prefix: Some(parsefun::$prefix),
             infix: None,
             precedence: Precedence::$precedence,
         }
     };
-    (None, $infix:ident, $precedence:ident) => {
+    ($tt:ident, None, $infix:ident, $precedence:ident) => {
         ParseRule {
+            idx: TokenType::$tt,
             prefix: None,
-            infix: None,
+            infix: Some(parsefun::$infix),
             precedence: Precedence::$precedence,
         }
     };
-    ($prefix:ident, $infix:ident, $precedence:ident) => {
+    ($tt:ident, $prefix:ident, $infix:ident, $precedence:ident) => {
         ParseRule {
+            idx: TokenType::$tt,
             prefix: Some(parsefun::$prefix),
             infix: Some(parsefun::$infix),
             precedence: Precedence::$precedence,
@@ -85,48 +90,48 @@ macro_rules! rule {
 
 /// Rules indexed by [TokenType]
 const RULES: [ParseRule; 41] = [
-    rule!(None, None, NONE), // UNINIT,
-    // follow text
-    rule!(grouping, None, NONE), // LEFT_PAREN,
-    rule!(None, None, NONE),     // RIGHT_PAREN,
-    rule!(None, None, NONE),     // LEFT_BRACE,
-    rule!(None, None, NONE),     // RIGHT_BRACE,
-    rule!(None, None, NONE),     // COMMA,
-    rule!(None, None, NONE),     // DOT,
-    rule!(unary, binary, TERM),  // MINUS,
-    rule!(None, binary, TERM),   // PLUS,
-    rule!(None, None, NONE),     // SEMICOLON,
-    rule!(None, binary, FACTOR), // SLASH,
-    rule!(None, binary, FACTOR), // STAR,
-    rule!(None, None, NONE),     // BANG,
-    rule!(None, None, NONE),     // BANG_EQUAL,
-    rule!(None, None, NONE),     // EQUAL,
-    rule!(None, None, NONE),     // EQUAL_EQUAL,
-    rule!(None, None, NONE),     // GREATER,
-    rule!(None, None, NONE),     // GREATER_EQUAL,
-    rule!(None, None, NONE),     // LESS,
-    rule!(None, None, NONE),     // LESS_EQUAL,
-    rule!(None, None, NONE),     // IDENTIFIER,
-    rule!(None, None, NONE),     // STRING,
-    rule!(number, None, NONE),   // NUMBER,
-    rule!(None, None, NONE),     // AND,
-    rule!(None, None, NONE),     // CLASS,
-    rule!(None, None, NONE),     // ELSE,
-    rule!(None, None, NONE),     // FALSE,
-    rule!(None, None, NONE),     // FOR,
-    rule!(None, None, NONE),     // FUN,
-    rule!(None, None, NONE),     // IF,
-    rule!(None, None, NONE),     // NIL,
-    rule!(None, None, NONE),     // OR,
-    rule!(None, None, NONE),     // PRINT,
-    rule!(None, None, NONE),     // RETURN,
-    rule!(None, None, NONE),     // SUPER,
-    rule!(None, None, NONE),     // THIS,
-    rule!(None, None, NONE),     // TRUE,
-    rule!(None, None, NONE),     // VAR,
-    rule!(None, None, NONE),     // WHILE,
-    rule!(None, None, NONE),     // ERROR,
-    rule!(None, None, NONE),     // EOF,
+    rule!(UNINIT, None, None, NONE), // UNINIT,
+    // follow the text
+    rule!(LEFT_PAREN, grouping, None, NONE),
+    rule!(RIGHT_PAREN, None, None, NONE),
+    rule!(LEFT_BRACE, None, None, NONE),
+    rule!(RIGHT_BRACE, None, None, NONE),
+    rule!(COMMA, None, None, NONE),
+    rule!(DOT, None, None, NONE),
+    rule!(MINUS, unary, binary, TERM),
+    rule!(PLUS, None, binary, TERM),
+    rule!(SEMICOLON, None, None, NONE),
+    rule!(SLASH, None, binary, FACTOR),
+    rule!(STAR, None, binary, FACTOR),
+    rule!(BANG, None, None, NONE),
+    rule!(BANG_EQUAL, None, None, NONE),
+    rule!(EQUAL, None, None, NONE),
+    rule!(EQUAL_EQUAL, None, None, NONE),
+    rule!(GREATER, None, None, NONE),
+    rule!(GREATER_EQUAL, None, None, NONE),
+    rule!(LESS, None, None, NONE),
+    rule!(LESS_EQUAL, None, None, NONE),
+    rule!(IDENTIFIER, None, None, NONE),
+    rule!(STRING, None, None, NONE),
+    rule!(NUMBER, number, None, NONE),
+    rule!(AND, None, None, NONE),
+    rule!(CLASS, None, None, NONE),
+    rule!(ELSE, None, None, NONE),
+    rule!(FALSE, None, None, NONE),
+    rule!(FOR, None, None, NONE),
+    rule!(FUN, None, None, NONE),
+    rule!(IF, None, None, NONE),
+    rule!(NIL, None, None, NONE),
+    rule!(OR, None, None, NONE),
+    rule!(PRINT, None, None, NONE),
+    rule!(RETURN, None, None, NONE),
+    rule!(SUPER, None, None, NONE),
+    rule!(THIS, None, None, NONE),
+    rule!(TRUE, None, None, NONE),
+    rule!(VAR, None, None, NONE),
+    rule!(WHILE, None, None, NONE),
+    rule!(ERROR, None, None, NONE),
+    rule!(EOF, None, None, NONE),
 ];
 
 pub struct Parser<'src, 'c> {
@@ -174,6 +179,13 @@ impl<'src, 'c> Parser<'src, 'c> {
     }
 
     pub fn end_compiler(&mut self) {
+        #[cfg(feature = "print_code")]
+        {
+            if self.had_error.get() {
+                self.chunk.disassemble("code");
+            }
+        }
+
         self.emit_return();
     }
 
@@ -183,9 +195,11 @@ impl<'src, 'c> Parser<'src, 'c> {
 
     pub fn parse_precedence(&mut self, precedence: Precedence) {
         self.advance();
-        let prefix_rule = parsefun::get_rule(self.previous.token_type).prefix;
-        match prefix_rule {
+        let rule = parsefun::get_rule(self.previous.token_type);
+        match rule.prefix {
             None => {
+                dbg!(self.previous.token_type);
+                dbg!(rule.idx);
                 self.error("Expect expression.");
                 return;
             }
@@ -305,7 +319,7 @@ mod parsefun {
             MINUS => scanneer.emit_byte(OP_SUBTRACT as u8),
             STAR => scanneer.emit_byte(OP_MULTIPLY as u8),
             SLASH => scanneer.emit_byte(OP_DIVIDE as u8),
-            op => {
+            _op => {
                 unreachable!("Maybe a bug")
             }
         }

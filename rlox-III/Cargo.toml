@@ -9,4 +9,6 @@ edition = "2018"
 [dependencies]
 
 [features]
+debug_all = ["trace_execution", "print_code"]
 trace_execution = []
+print_code = []

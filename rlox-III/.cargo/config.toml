@@ -1,2 +1,2 @@
 [alias]
-run_trace = ["run", "--features=trace_execution"]
+run_trace = ["run", "--features=debug_all"]
